@@ -40,7 +40,7 @@ export default class RedisEventBusService extends AbstractEventBusModuleService 
     this.logger_ = logger
 
     this.queue_ = new Queue(moduleOptions.queueName ?? `events-queue`, {
-      prefix: `${this.constructor.name}`,
+      prefix: `{${this.constructor.name}}`,
       ...(moduleOptions.queueOptions ?? {}),
       connection: eventBusRedisConnection,
     })
@@ -52,7 +52,7 @@ export default class RedisEventBusService extends AbstractEventBusModuleService 
         moduleOptions.queueName ?? "events-queue",
         this.worker_,
         {
-          prefix: `${this.constructor.name}`,
+          prefix: `{${this.constructor.name}}`,
           ...(moduleOptions.workerOptions ?? {}),
           connection: eventBusRedisConnection,
         }
