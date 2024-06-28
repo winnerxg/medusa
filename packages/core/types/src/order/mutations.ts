@@ -249,8 +249,11 @@ export interface UpdateOrderShippingMethodAdjustmentDTO {
 
 export interface CreateOrderChangeDTO {
   order_id: string
+  return_id?: string
+  claim_id?: string
+  exchange_id?: string
   description?: string
-  internal_note?: string
+  internal_note?: string | null
   requested_by?: string
   requested_at?: Date
   created_by?: string
@@ -262,7 +265,7 @@ export interface UpdateOrderChangeDTO {
   id: string
   status?: string
   description?: string
-  internal_note?: string
+  internal_note?: string | null
   requested_by?: string
   requested_at?: Date
   confirmed_by?: string
@@ -298,18 +301,22 @@ export interface ConfirmOrderChangeDTO {
 
 export interface CreateOrderChangeActionDTO {
   order_change_id?: string
+  order_id?: string
+  return_id?: string
+  claim_id?: string
+  exchange_id?: string
   version?: number
   reference?: string
   reference_id?: string
   action: ChangeActionType
-  internal_note?: string
+  internal_note?: string | null
   amount?: BigNumberInput
   details?: Record<string, unknown>
 }
 
 export interface UpdateOrderChangeActionDTO {
   id: string
-  internal_note?: string
+  internal_note?: string | null
 }
 
 /** ORDER TRANSACTION START */
@@ -319,7 +326,7 @@ export interface CreateOrderTransactionDTO {
   description?: string
   reference?: string
   reference_id?: string
-  internal_note?: string
+  internal_note?: string | null
   created_by?: string
   amount: BigNumberInput
   currency_code: string
@@ -331,7 +338,7 @@ export interface UpdateOrderTransactionDTO {
   amount?: BigNumberInput
   currency_code?: string
   description?: string
-  internal_note?: string
+  internal_note?: string | null
   reference?: string
   reference_id?: string
   metadata?: Record<string, unknown> | null
@@ -368,39 +375,95 @@ export interface UpdateOrderItemWithSelectorDTO {
 
 /** ORDER bundled action flows  */
 
+interface BaseOrderBundledItemActionsDTO {
+  id: string
+  quantity: BigNumberInput
+  internal_note?: string | null
+  note?: string | null
+  metadata?: Record<string, unknown> | null
+}
 interface BaseOrderBundledActionsDTO {
   order_id: string
+  return_id?: string
+  claim_id?: string
+  exchange_id?: string
+
   description?: string
-  internal_note?: string
+  internal_note?: string | null
   reference?: string
   reference_id?: string
-  created_by?: string
-  items: {
-    id: string
-    quantity: BigNumberInput
-    internal_note?: string
-    metadata?: Record<string, unknown> | null
-  }[]
+  created_by?: string | null
   metadata?: Record<string, unknown> | null
 }
 
 export interface RegisterOrderFulfillmentDTO
-  extends BaseOrderBundledActionsDTO {}
+  extends BaseOrderBundledActionsDTO {
+  items: BaseOrderBundledItemActionsDTO[]
+}
 
-export interface CancelOrderFulfillmentDTO extends BaseOrderBundledActionsDTO {}
+export interface CancelOrderFulfillmentDTO extends BaseOrderBundledActionsDTO {
+  items: BaseOrderBundledItemActionsDTO[]
+}
 
-export interface RegisterOrderShipmentDTO extends BaseOrderBundledActionsDTO {}
+export interface RegisterOrderShipmentDTO extends BaseOrderBundledActionsDTO {
+  items: BaseOrderBundledItemActionsDTO[]
+  no_notification?: boolean
+}
 
 export interface CreateOrderReturnDTO extends BaseOrderBundledActionsDTO {
-  shipping_method: Omit<CreateOrderShippingMethodDTO, "order_id"> | string
+  items: {
+    id: string
+    quantity: BigNumberInput
+    internal_note?: string | null
+    note?: string | null
+    reason_id?: string | null
+    metadata?: Record<string, any>
+  }[]
+  shipping_method?: Omit<CreateOrderShippingMethodDTO, "order_id"> | string
+  refund_amount?: BigNumberInput
+  no_notification?: boolean
+}
+
+export type OrderClaimType = "refund" | "replace"
+export type ClaimReason =
+  | "missing_item"
+  | "wrong_item"
+  | "production_failure"
+  | "other"
+export interface CreateOrderClaimDTO extends BaseOrderBundledActionsDTO {
+  type: OrderClaimType
+  claim_items: (BaseOrderBundledItemActionsDTO & {
+    reason: ClaimReason
+    images?: {
+      url: string
+      metadata?: Record<string, any>
+    }[]
+  })[]
+  additional_items?: BaseOrderBundledItemActionsDTO[]
+  shipping_methods?: Omit<CreateOrderShippingMethodDTO, "order_id">[] | string[]
+  return_shipping?: Omit<CreateOrderShippingMethodDTO, "order_id"> | string
+  refund_amount?: BigNumberInput
+  no_notification?: boolean
+}
+
+export interface CreateOrderExchangeDTO extends BaseOrderBundledActionsDTO {
+  additional_items?: BaseOrderBundledItemActionsDTO[]
+  shipping_methods?: Omit<CreateOrderShippingMethodDTO, "order_id">[] | string[]
+  return_shipping: Omit<CreateOrderShippingMethodDTO, "order_id"> | string
+  difference_due?: BigNumberInput
+  allow_backorder?: boolean
+  no_notification?: boolean
 }
 
 export interface CancelOrderReturnDTO {
-  order_id: string
   return_id: string
 }
 
-export interface ReceiveOrderReturnDTO extends BaseOrderBundledActionsDTO {}
+export interface ReceiveOrderReturnDTO
+  extends Omit<BaseOrderBundledActionsDTO, "order_id"> {
+  items: BaseOrderBundledItemActionsDTO[]
+  return_id: string
+}
 
 /** ORDER bundled action flows */
 

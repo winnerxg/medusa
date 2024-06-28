@@ -1,6 +1,6 @@
 import { ModuleRegistrationName } from "@medusajs/modules-sdk"
 import { IFulfillmentModuleService } from "@medusajs/types"
-import { medusaIntegrationTestRunner } from "medusa-test-utils/dist"
+import { medusaIntegrationTestRunner } from "medusa-test-utils"
 import { createAdminUser } from "../../../helpers/create-admin-user"
 import {
   generateCreateFulfillmentData,
@@ -40,7 +40,7 @@ medusaIntegrationTestRunner({
       it("should allow to create a full data structure after the backward compatible migration have run on top of the medusa v1 database", async () => {
         await setupFullDataFulfillmentStructure(service, { providerId })
 
-        const fulfillmentSets = await service.list(
+        const fulfillmentSets = await service.listFulfillmentSets(
           {},
           {
             relations: [
@@ -119,7 +119,7 @@ medusaIntegrationTestRunner({
           type: "default",
         })
 
-        const fulfillmentSet = await service.create({
+        const fulfillmentSet = await service.createFulfillmentSets({
           name: "test",
           type: "test-type",
         })

@@ -1,10 +1,9 @@
 import {
   Context,
   DAL,
+  FilterableProductProps,
   FindConfig,
   ProductTypes,
-  BaseFilterable,
-  FilterableProductProps,
 } from "@medusajs/types"
 import { InjectManager, MedusaContext, ModulesSdkUtils } from "@medusajs/utils"
 import { Product } from "@models"
@@ -19,12 +18,10 @@ type NormalizedFilterableProductProps = ProductTypes.FilterableProductProps & {
   }
 }
 
-export default class ProductService<
-  TEntity extends Product = Product
-> extends ModulesSdkUtils.internalModuleServiceFactory<InjectedDependencies>(
+export default class ProductService extends ModulesSdkUtils.MedusaInternalService<InjectedDependencies>(
   Product
-)<TEntity> {
-  protected readonly productRepository_: DAL.RepositoryService<TEntity>
+)<Product> {
+  protected readonly productRepository_: DAL.RepositoryService<Product>
 
   constructor({ productRepository }: InjectedDependencies) {
     // @ts-ignore
@@ -37,9 +34,9 @@ export default class ProductService<
   @InjectManager("productRepository_")
   async list(
     filters: ProductTypes.FilterableProductProps = {},
-    config: FindConfig<TEntity> = {},
+    config: FindConfig<Product> = {},
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TEntity[]> {
+  ): Promise<Product[]> {
     return await super.list(
       ProductService.normalizeFilters(filters),
       config,
@@ -52,7 +49,7 @@ export default class ProductService<
     filters: ProductTypes.FilterableProductProps = {},
     config: FindConfig<any> = {},
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<[TEntity[], number]> {
+  ): Promise<[Product[], number]> {
     return await super.listAndCount(
       ProductService.normalizeFilters(filters),
       config,

@@ -1,7 +1,6 @@
 process.chdir(__dirname)
 
 module.exports = {
-  name: "Modules",
   testEnvironment: `node`,
   rootDir: "./",
   testPathIgnorePatterns: [
@@ -16,7 +15,15 @@ module.exports = {
   ],
   transformIgnorePatterns: ["/dist", "/node_modules/"],
   transform: {
-    "^.+\\.[jt]s$": ["@swc/jest"],
+    "^.+\\.[jt]s$": [
+      "@swc/jest",
+      {
+        jsc: {
+          parser: { syntax: "typescript", decorators: true },
+          transform: { decoratorMetadata: true },
+        },
+      },
+    ],
   },
   setupFiles: ["../setup-env.js"],
   /*setupFilesAfterEnv: ["../setup.js"],

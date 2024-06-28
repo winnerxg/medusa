@@ -994,6 +994,91 @@ medusaIntegrationTestRunner({
         })
       })
 
+      describe("GET /admin/products/:id/variants", () => {
+        it("should get product variants with inventory quantity computed", async () => {
+          const stockLocation = (
+            await api.post(
+              `/admin/stock-locations`,
+              { name: "loc" },
+              adminHeaders
+            )
+          ).data.stock_location
+
+          const inventoryItem1 = (
+            await api.post(
+              `/admin/inventory-items`,
+              { sku: "inventory-1" },
+              adminHeaders
+            )
+          ).data.inventory_item
+
+          const inventoryItem2 = (
+            await api.post(
+              `/admin/inventory-items`,
+              { sku: "inventory-2" },
+              adminHeaders
+            )
+          ).data.inventory_item
+
+          await api.post(
+            `/admin/inventory-items/${inventoryItem1.id}/location-levels`,
+            {
+              location_id: stockLocation.id,
+              stocked_quantity: 8,
+            },
+            adminHeaders
+          )
+
+          await api.post(
+            `/admin/inventory-items/${inventoryItem2.id}/location-levels`,
+            {
+              location_id: stockLocation.id,
+              stocked_quantity: 4,
+            },
+            adminHeaders
+          )
+
+          const payload = {
+            title: "Test product - 1",
+            handle: "test-1",
+            variants: [
+              {
+                title: "Custom inventory 1",
+                prices: [{ currency_code: "usd", amount: 100 }],
+                manage_inventory: true,
+                inventory_items: [
+                  {
+                    inventory_item_id: inventoryItem1.id,
+                    required_quantity: 4,
+                  },
+                  {
+                    inventory_item_id: inventoryItem2.id,
+                    required_quantity: 2,
+                  },
+                ],
+              },
+            ],
+          }
+
+          const product = (
+            await api.post(`/admin/products`, payload, adminHeaders)
+          ).data.product
+
+          const variants = (
+            await api.get(
+              `/admin/products/${product.id}/variants?fields=%2Binventory_quantity`,
+              adminHeaders
+            )
+          ).data.variants
+
+          expect(variants).toEqual([
+            expect.objectContaining({
+              inventory_quantity: 2,
+            }),
+          ])
+        })
+      })
+
       describe("POST /admin/products", () => {
         it("creates a product", async () => {
           const response = await api
@@ -1134,6 +1219,64 @@ medusaIntegrationTestRunner({
                       option: expect.objectContaining({
                         title: "color",
                       }),
+                    }),
+                  ]),
+                }),
+              ]),
+            })
+          )
+        })
+
+        it("creates a product variant with price rules", async () => {
+          await api.post(
+            `/admin/pricing/rule-types`,
+            {
+              name: "Region",
+              rule_attribute: "region_id",
+              default_priority: 1,
+            },
+            adminHeaders
+          )
+
+          const response = await api.post(
+            "/admin/products",
+            {
+              title: "Test create",
+              variants: [
+                {
+                  title: "Price with rules",
+                  prices: [
+                    {
+                      currency_code: "usd",
+                      amount: 100,
+                      rules: { region_id: "eur" },
+                    },
+                  ],
+                },
+              ],
+            },
+            adminHeaders
+          )
+
+          const priceIdSelector = /^price_*/
+
+          expect(response.status).toEqual(200)
+          expect(response.data.product).toEqual(
+            expect.objectContaining({
+              id: expect.stringMatching(/^prod_*/),
+              variants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: expect.stringMatching(/^variant_*/),
+                  title: "Price with rules",
+                  prices: expect.arrayContaining([
+                    expect.objectContaining({
+                      id: expect.stringMatching(priceIdSelector),
+                      currency_code: "usd",
+                      amount: 100,
+                      created_at: expect.any(String),
+                      updated_at: expect.any(String),
+                      variant_id: expect.stringMatching(/^variant_*/),
+                      rules: { region_id: "eur" },
                     }),
                   ]),
                 }),

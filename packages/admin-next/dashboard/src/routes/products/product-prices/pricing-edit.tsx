@@ -3,15 +3,14 @@ import { Button } from "@medusajs/ui"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import * as zod from "zod"
+import { HttpTypes } from "@medusajs/types"
+
 import { RouteFocusModal, useRouteModal } from "../../../components/route-modal"
 import { useUpdateProductVariantsBatch } from "../../../hooks/api/products"
-import { ExtendedProductDTO } from "../../../types/api-responses"
 import { VariantPricingForm } from "../common/variant-pricing-form"
-import {
-  getDbAmount,
-  getPresentationalAmount,
-} from "../../../lib/money-amount-helpers.ts"
-import { castNumber } from "../../../lib/cast-number.ts"
+import { castNumber } from "../../../lib/cast-number"
+import { useRegions } from "../../../hooks/api/regions.tsx"
+import { useMemo } from "react"
 
 export const UpdateVariantPricesSchema = zod.object({
   variants: zod.array(
@@ -27,18 +26,42 @@ export type UpdateVariantPricesSchemaType = zod.infer<
   typeof UpdateVariantPricesSchema
 >
 
-export const PricingEdit = ({ product }: { product: ExtendedProductDTO }) => {
+export const PricingEdit = ({
+  product,
+  variantId,
+}: {
+  product: HttpTypes.AdminProduct
+  variantId?: string
+}) => {
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
+
+  const { regions } = useRegions({ limit: 9999 })
+  const regionsCurrencyMap = useMemo(() => {
+    if (!regions?.length) {
+      return {}
+    }
+
+    return regions.reduce((acc, reg) => {
+      acc[reg.id] = reg.currency_code
+      return acc
+    }, {})
+  }, regions)
+
+  const variants = variantId
+    ? product.variants.filter((v) => v.id === variantId)
+    : product.variants
+
   const form = useForm<UpdateVariantPricesSchemaType>({
     defaultValues: {
-      variants: product.variants.map((variant: any) => ({
+      variants: variants.map((variant: any) => ({
         title: variant.title,
         prices: variant.prices.reduce((acc: any, price: any) => {
-          acc[price.currency_code] = getPresentationalAmount(
-            price.amount,
-            price.currency_code
-          )
+          if (price.rules?.region_id) {
+            acc[price.rules.region_id] = price.amount
+          } else {
+            acc[price.currency_code] = price.amount
+          }
           return acc
         }, {}),
       })) as any,
@@ -51,20 +74,51 @@ export const PricingEdit = ({ product }: { product: ExtendedProductDTO }) => {
 
   const handleSubmit = form.handleSubmit(
     async (values) => {
-      const reqData = {
-        update: values.variants.map((variant, ind) => ({
-          id: product.variants[ind].id,
-          prices: Object.entries(variant.prices || {}).map(
-            ([key, value]: any) => ({
-              currency_code: key,
-              amount: getDbAmount(castNumber(value), key),
-            })
-          ),
-        })),
-      }
+      const reqData = values.variants.map((variant, ind) => ({
+        id: variants[ind].id,
+        prices: Object.entries(variant.prices || {}).map(
+          ([currencyCodeOrRegionId, value]: any) => {
+            const regionId = currencyCodeOrRegionId.startsWith("reg_")
+              ? currencyCodeOrRegionId
+              : undefined
+            const currencyCode = currencyCodeOrRegionId.startsWith("reg_")
+              ? regionsCurrencyMap[regionId]
+              : currencyCodeOrRegionId
+
+            let existingId = undefined
+
+            if (regionId) {
+              existingId = variants[ind].prices.find(
+                (p) => p.rules["region_id"] === regionId
+              )?.id
+            } else {
+              existingId = variants[ind].prices.find(
+                (p) => p.currency_code === currencyCode
+              )?.id
+            }
+
+            const amount = castNumber(value)
+
+            const pricePayload = existingId
+              ? {
+                  id: existingId,
+                  amount,
+                  currency_code: currencyCode,
+                }
+              : { currency_code: currencyCode, amount }
+
+            if (regionId && !existingId) {
+              pricePayload.rules = { region_id: regionId }
+            }
+
+            return pricePayload
+          }
+        ),
+      }))
+
       await mutateAsync(reqData, {
         onSuccess: () => {
-          handleSuccess(`/products/${product.id}`)
+          handleSuccess("..")
         },
       })
     },

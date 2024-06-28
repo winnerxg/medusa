@@ -1,3 +1,4 @@
+import { MetadataType } from "../common"
 import { BaseFilterable } from "../dal"
 import { OperatorMap } from "../dal/utils"
 
@@ -23,15 +24,15 @@ export interface ProductDTO {
   /**
    * The handle of the product. The handle can be used to create slug URL paths.
    */
-  handle?: string | null
+  handle: string
   /**
    * The subttle of the product.
    */
-  subtitle?: string | null
+  subtitle: string | null
   /**
    * The description of the product.
    */
-  description?: string | null
+  description: string | null
   /**
    * Whether the product is a gift card.
    */
@@ -43,49 +44,49 @@ export interface ProductDTO {
   /**
    * The URL of the product's thumbnail.
    */
-  thumbnail?: string | null
+  thumbnail: string | null
   /**
    * The width of the product.
    */
-  width?: number | null
+  width: number | null
   /**
    * The weight of the product.
    */
-  weight?: number | null
+  weight: number | null
   /**
    * The length of the product.
    */
-  length?: number | null
+  length: number | null
   /**
    * The height of the product.
    */
-  height?: number | null
+  height: number | null
   /**
    * The origin country of the product.
    */
-  origin_country?: string | null
+  origin_country: string | null
   /**
    * The HS Code of the product.
    */
-  hs_code?: string | null
+  hs_code: string | null
   /**
    * The MID Code of the product.
    */
-  mid_code?: string | null
+  mid_code: string | null
   /**
    * The material of the product.
    */
-  material?: string | null
+  material: string | null
   /**
    * The associated product collection.
    *
    * @expandable
    */
-  collection?: ProductCollectionDTO | null
+  collection: ProductCollectionDTO | null
   /**
    * The associated product collection id.
    */
-  collection_id?: string | null
+  collection_id: string | null
   /**
    * The associated product categories.
    *
@@ -97,11 +98,11 @@ export interface ProductDTO {
    *
    * @expandable
    */
-  type?: ProductTypeDTO | null
+  type: ProductTypeDTO | null
   /**
    * The associated product type id.
    */
-  type_id?: string | null
+  type_id: string | null
   /**
    * The associated product tags.
    *
@@ -134,23 +135,23 @@ export interface ProductDTO {
    * The ID of the product in an external system. This is useful if you're integrating the product with a third-party service and want to maintain
    * a reference to the ID in the integrated service.
    */
-  external_id?: string | null
+  external_id: string | null
   /**
    * When the product was created.
    */
-  created_at?: string | Date
+  created_at: string | Date
   /**
    * When the product was updated.
    */
-  updated_at?: string | Date
+  updated_at: string | Date
   /**
    * When the product was deleted.
    */
-  deleted_at?: string | Date
+  deleted_at: string | Date
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -170,59 +171,59 @@ export interface ProductVariantDTO {
   /**
    * The SKU of the product variant.
    */
-  sku?: string | null
+  sku: string | null
   /**
    * The barcode of the product variant.
    */
-  barcode?: string | null
+  barcode: string | null
   /**
    * The EAN of the product variant.
    */
-  ean?: string | null
+  ean: string | null
   /**
    * The UPC of the product variant.
    */
-  upc?: string | null
+  upc: string | null
   /**
    * Whether the product variant can be ordered when it's out of stock.
    */
-  allow_backorder?: boolean
+  allow_backorder: boolean
   /**
    * Whether the product variant's inventory should be managed by the core system.
    */
-  manage_inventory?: boolean
+  manage_inventory: boolean
   /**
    * The HS Code of the product variant.
    */
-  hs_code?: string | null
+  hs_code: string | null
   /**
    * The origin country of the product variant.
    */
-  origin_country?: string | null
+  origin_country: string | null
   /**
    * The MID Code of the product variant.
    */
-  mid_code?: string | null
+  mid_code: string | null
   /**
    * The material of the product variant.
    */
-  material?: string | null
+  material: string | null
   /**
    * The weight of the product variant.
    */
-  weight?: number | null
+  weight: number | null
   /**
    * The length of the product variant.
    */
-  length?: number | null
+  length: number | null
   /**
    * The height of the product variant.
    */
-  height?: number | null
+  height: number | null
   /**
    * The width of the product variant.
    */
-  width?: number | null
+  width: number | null
   /**
    * The associated product options.
    *
@@ -232,7 +233,7 @@ export interface ProductVariantDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata: Record<string, unknown> | null
   /**
    * The associated product.
    *
@@ -242,7 +243,7 @@ export interface ProductVariantDTO {
   /**
    * The associated product id.
    */
-  product_id?: string | null
+  product_id: string | null
   /**
    * he ranking of the variant among other variants associated with the product.
    */
@@ -298,7 +299,7 @@ export interface ProductCategoryDTO {
   /**
    * The ranking of the product category among sibling categories.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
   /**
    * The associated parent category.
    *
@@ -368,7 +369,14 @@ export interface CreateProductCategoryDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
+}
+
+export interface UpsertProductCategoryDTO extends UpdateProductCategoryDTO {
+  /**
+   * The ID of the product category to update. If not provided, the product category is created. In this case, the `name` property is required.
+   */
+  id?: string
 }
 
 /**
@@ -408,7 +416,7 @@ export interface UpdateProductCategoryDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
 }
 
 /**
@@ -428,7 +436,7 @@ export interface ProductTagDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
   /**
    * The associated products.
    *
@@ -458,7 +466,7 @@ export interface ProductCollectionDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
   /**
    * When the product collection was created.
    */
@@ -496,7 +504,7 @@ export interface ProductTypeDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
   /**
    * When the product type was created.
    */
@@ -545,7 +553,7 @@ export interface ProductOptionDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
   /**
    * When the product option was created.
    */
@@ -582,7 +590,7 @@ export interface ProductImageDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
   /**
    * When the product image was created.
    */
@@ -631,7 +639,7 @@ export interface ProductOptionValueDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
   /**
    * When the product option value was created.
    */
@@ -693,6 +701,12 @@ export interface FilterableProductProps
      * Values to filter product tags by.
      */
     value?: string[]
+  }
+  /**
+   * Filters on a product's variant properties.
+   */
+  variants?: {
+    options: { value: string; option_id: string }
   }
   /**
    * Filter a product by the ID of the associated type
@@ -943,7 +957,7 @@ export interface CreateProductCollectionDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -985,7 +999,7 @@ export interface UpdateProductCollectionDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -1001,7 +1015,7 @@ export interface CreateProductTypeDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -1031,7 +1045,7 @@ export interface UpdateProductTypeDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown> | null
+  metadata?: MetadataType
 }
 
 /**
@@ -1047,7 +1061,7 @@ export interface CreateProductImageDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -1076,7 +1090,7 @@ export interface UpdateProductImageDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -1183,19 +1197,19 @@ export interface CreateProductVariantDTO {
   /**
    * The SKU of the product variant.
    */
-  sku?: string | null
+  sku?: string
   /**
    * The barcode of the product variant.
    */
-  barcode?: string | null
+  barcode?: string
   /**
    * The EAN of the product variant.
    */
-  ean?: string | null
+  ean?: string
   /**
    * The UPC of the product variant.
    */
-  upc?: string | null
+  upc?: string
   /**
    * Whether the product variant can be ordered when it's out of stock.
    */
@@ -1207,35 +1221,35 @@ export interface CreateProductVariantDTO {
   /**
    * The HS Code of the product variant.
    */
-  hs_code?: string | null
+  hs_code?: string
   /**
    * The origin country of the product variant.
    */
-  origin_country?: string | null
+  origin_country?: string
   /**
    * The MID Code of the product variant.
    */
-  mid_code?: string | null
+  mid_code?: string
   /**
    * The material of the product variant.
    */
-  material?: string | null
+  material?: string
   /**
    * The weight of the product variant.
    */
-  weight?: number | null
+  weight?: number
   /**
    * The length of the product variant.
    */
-  length?: number | null
+  length?: number
   /**
    * The height of the product variant.
    */
-  height?: number | null
+  height?: number
   /**
    * The width of the product variant.
    */
-  width?: number | null
+  width?: number
   /**
    * The options of the variant. Each key is an option's title, and value
    * is an option's value. If an option with the specified title doesn't exist,
@@ -1248,7 +1262,7 @@ export interface CreateProductVariantDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -1340,7 +1354,7 @@ export interface UpdateProductVariantDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -1349,6 +1363,10 @@ export interface UpdateProductVariantDTO {
  * A product to create.
  */
 export interface CreateProductDTO {
+  /**
+   * Optionally pass an ID when creating a product.
+   */
+  id?: string
   /**
    * The title of the product.
    */
@@ -1445,7 +1463,7 @@ export interface CreateProductDTO {
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }
 
 /**
@@ -1472,11 +1490,11 @@ export interface UpdateProductDTO {
   /**
    * The subttle of the product.
    */
-  subtitle?: string
+  subtitle?: string | null
   /**
    * The description of the product.
    */
-  description?: string
+  description?: string | null
   /**
    * Whether the product is a gift card.
    */
@@ -1488,7 +1506,7 @@ export interface UpdateProductDTO {
   /**
    * The URL of the product's thumbnail.
    */
-  thumbnail?: string
+  thumbnail?: string | null
   /**
    * The handle of the product. The handle can be used to create slug URL paths.
    * If not supplied, the value of the `handle` attribute of the product is set to the slug version of the `title` attribute.
@@ -1530,37 +1548,37 @@ export interface UpdateProductDTO {
   /**
    * The width of the product.
    */
-  width?: number
+  width?: number | null
   /**
    * The height of the product.
    */
-  height?: number
+  height?: number | null
   /**
    * The length of the product.
    */
-  length?: number
+  length?: number | null
   /**
    * The weight of the product.
    */
-  weight?: number
+  weight?: number | null
   /**
    * The origin country of the product.
    */
-  origin_country?: string
+  origin_country?: string | null
   /**
    * The HS Code of the product.
    */
-  hs_code?: string
+  hs_code?: string | null
   /**
    * The material of the product.
    */
-  material?: string
+  material?: string | null
   /**
    * The MID Code of the product.
    */
-  mid_code?: string
+  mid_code?: string | null
   /**
    * Holds custom data in key-value pairs.
    */
-  metadata?: Record<string, unknown>
+  metadata?: MetadataType
 }

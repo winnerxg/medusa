@@ -18,37 +18,26 @@ import {
   InjectManager,
   MedusaContext,
   MedusaError,
-  ModulesSdkUtils,
+  MedusaService,
 } from "@medusajs/utils"
 import AuthProviderService from "./auth-provider"
-import { populate } from "dotenv"
 
 type InjectedDependencies = {
   baseRepository: DAL.RepositoryService
-  authIdentityService: ModulesSdkTypes.InternalModuleService<any>
-  providerIdentityService: ModulesSdkTypes.InternalModuleService<any>
+  authIdentityService: ModulesSdkTypes.IMedusaInternalService<any>
+  providerIdentityService: ModulesSdkTypes.IMedusaInternalService<any>
   authProviderService: AuthProviderService
 }
-
-const generateMethodForModels = [AuthIdentity, ProviderIdentity]
-
-export default class AuthModuleService<
-    TAuthIdentity extends AuthIdentity = AuthIdentity,
-    TProviderIdentity extends ProviderIdentity = ProviderIdentity
-  >
-  extends ModulesSdkUtils.abstractModuleServiceFactory<
-    InjectedDependencies,
-    AuthTypes.AuthIdentityDTO,
-    {
-      AuthIdentity: { dto: AuthTypes.AuthIdentityDTO }
-      ProviderIdentity: { dto: AuthTypes.ProviderIdentityDTO }
-    }
-  >(AuthIdentity, generateMethodForModels, entityNameToLinkableKeysMap)
+export default class AuthModuleService
+  extends MedusaService<{
+    AuthIdentity: { dto: AuthTypes.AuthIdentityDTO }
+    ProviderIdentity: { dto: AuthTypes.ProviderIdentityDTO }
+  }>({ AuthIdentity, ProviderIdentity }, entityNameToLinkableKeysMap)
   implements AuthTypes.IAuthModuleService
 {
   protected baseRepository_: DAL.RepositoryService
-  protected authIdentityService_: ModulesSdkTypes.InternalModuleService<TAuthIdentity>
-  protected providerIdentityService_: ModulesSdkTypes.InternalModuleService<TProviderIdentity>
+  protected authIdentityService_: ModulesSdkTypes.IMedusaInternalService<AuthIdentity>
+  protected providerIdentityService_: ModulesSdkTypes.IMedusaInternalService<ProviderIdentity>
   protected readonly authProviderService_: AuthProviderService
 
   constructor(
@@ -73,18 +62,19 @@ export default class AuthModuleService<
     return joinerConfig
   }
 
-  create(
+  // @ts-expect-error
+  createAuthIdentities(
     data: AuthTypes.CreateAuthIdentityDTO[],
     sharedContext?: Context
   ): Promise<AuthTypes.AuthIdentityDTO[]>
 
-  create(
+  createAuthIdentities(
     data: AuthTypes.CreateAuthIdentityDTO,
     sharedContext?: Context
   ): Promise<AuthTypes.AuthIdentityDTO>
 
   @InjectManager("baseRepository_")
-  async create(
+  async createAuthIdentities(
     data: AuthTypes.CreateAuthIdentityDTO[] | AuthTypes.CreateAuthIdentityDTO,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<AuthTypes.AuthIdentityDTO | AuthTypes.AuthIdentityDTO[]> {
@@ -101,19 +91,19 @@ export default class AuthModuleService<
     )
   }
 
-  update(
+  // TODO: Update to follow convention
+  updateAuthIdentites(
     data: AuthTypes.UpdateAuthIdentityDTO[],
     sharedContext?: Context
   ): Promise<AuthTypes.AuthIdentityDTO[]>
 
-  update(
+  updateAuthIdentites(
     data: AuthTypes.UpdateAuthIdentityDTO,
     sharedContext?: Context
   ): Promise<AuthTypes.AuthIdentityDTO>
 
-  // TODO: should be pluralized, see convention about the methods naming or the abstract module service interface definition @engineering
   @InjectManager("baseRepository_")
-  async update(
+  async updateAuthIdentites(
     data: AuthTypes.UpdateAuthIdentityDTO | AuthTypes.UpdateAuthIdentityDTO[],
     @MedusaContext() sharedContext: Context = {}
   ): Promise<AuthTypes.AuthIdentityDTO | AuthTypes.AuthIdentityDTO[]> {

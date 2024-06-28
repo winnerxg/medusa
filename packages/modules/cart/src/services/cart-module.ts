@@ -10,16 +10,16 @@ import {
   ModulesSdkTypes,
 } from "@medusajs/types"
 import {
-  InjectManager,
-  InjectTransactionManager,
-  MedusaContext,
-  MedusaError,
-  ModulesSdkUtils,
   createRawPropertiesFromBigNumber,
   decorateCartTotals,
   deduplicate,
+  InjectManager,
+  InjectTransactionManager,
   isObject,
   isString,
+  MedusaContext,
+  MedusaError,
+  ModulesSdkUtils,
 } from "@medusajs/utils"
 import {
   Address,
@@ -43,17 +43,18 @@ import { entityNameToLinkableKeysMap, joinerConfig } from "../joiner-config"
 
 type InjectedDependencies = {
   baseRepository: DAL.RepositoryService
-  cartService: ModulesSdkTypes.InternalModuleService<any>
-  addressService: ModulesSdkTypes.InternalModuleService<any>
-  lineItemService: ModulesSdkTypes.InternalModuleService<any>
-  shippingMethodAdjustmentService: ModulesSdkTypes.InternalModuleService<any>
-  shippingMethodService: ModulesSdkTypes.InternalModuleService<any>
-  lineItemAdjustmentService: ModulesSdkTypes.InternalModuleService<any>
-  lineItemTaxLineService: ModulesSdkTypes.InternalModuleService<any>
-  shippingMethodTaxLineService: ModulesSdkTypes.InternalModuleService<any>
+  cartService: ModulesSdkTypes.IMedusaInternalService<any>
+  addressService: ModulesSdkTypes.IMedusaInternalService<any>
+  lineItemService: ModulesSdkTypes.IMedusaInternalService<any>
+  shippingMethodAdjustmentService: ModulesSdkTypes.IMedusaInternalService<any>
+  shippingMethodService: ModulesSdkTypes.IMedusaInternalService<any>
+  lineItemAdjustmentService: ModulesSdkTypes.IMedusaInternalService<any>
+  lineItemTaxLineService: ModulesSdkTypes.IMedusaInternalService<any>
+  shippingMethodTaxLineService: ModulesSdkTypes.IMedusaInternalService<any>
 }
 
-const generateMethodForModels = [
+const generateMethodForModels = {
+  Cart,
   Address,
   LineItem,
   LineItemAdjustment,
@@ -61,42 +62,30 @@ const generateMethodForModels = [
   ShippingMethod,
   ShippingMethodAdjustment,
   ShippingMethodTaxLine,
-]
+}
 
-export default class CartModuleService<
-    TCart extends Cart = Cart,
-    TAddress extends Address = Address,
-    TLineItem extends LineItem = LineItem,
-    TLineItemAdjustment extends LineItemAdjustment = LineItemAdjustment,
-    TLineItemTaxLine extends LineItemTaxLine = LineItemTaxLine,
-    TShippingMethodAdjustment extends ShippingMethodAdjustment = ShippingMethodAdjustment,
-    TShippingMethodTaxLine extends ShippingMethodTaxLine = ShippingMethodTaxLine,
-    TShippingMethod extends ShippingMethod = ShippingMethod
-  >
-  extends ModulesSdkUtils.abstractModuleServiceFactory<
-    InjectedDependencies,
-    CartTypes.CartDTO,
-    {
-      Address: { dto: CartTypes.CartAddressDTO }
-      LineItem: { dto: CartTypes.CartLineItemDTO }
-      LineItemAdjustment: { dto: CartTypes.LineItemAdjustmentDTO }
-      LineItemTaxLine: { dto: CartTypes.LineItemTaxLineDTO }
-      ShippingMethod: { dto: CartTypes.CartShippingMethodDTO }
-      ShippingMethodAdjustment: { dto: CartTypes.ShippingMethodAdjustmentDTO }
-      ShippingMethodTaxLine: { dto: CartTypes.ShippingMethodTaxLineDTO }
-    }
-  >(Cart, generateMethodForModels, entityNameToLinkableKeysMap)
+export default class CartModuleService
+  extends ModulesSdkUtils.MedusaService<{
+    Cart: { dto: CartTypes.CartDTO }
+    Address: { dto: CartTypes.CartAddressDTO }
+    LineItem: { dto: CartTypes.CartLineItemDTO }
+    LineItemAdjustment: { dto: CartTypes.LineItemAdjustmentDTO }
+    LineItemTaxLine: { dto: CartTypes.LineItemTaxLineDTO }
+    ShippingMethod: { dto: CartTypes.CartShippingMethodDTO }
+    ShippingMethodAdjustment: { dto: CartTypes.ShippingMethodAdjustmentDTO }
+    ShippingMethodTaxLine: { dto: CartTypes.ShippingMethodTaxLineDTO }
+  }>(generateMethodForModels, entityNameToLinkableKeysMap)
   implements ICartModuleService
 {
   protected baseRepository_: DAL.RepositoryService
-  protected cartService_: ModulesSdkTypes.InternalModuleService<TCart>
-  protected addressService_: ModulesSdkTypes.InternalModuleService<TAddress>
-  protected lineItemService_: ModulesSdkTypes.InternalModuleService<TLineItem>
-  protected shippingMethodAdjustmentService_: ModulesSdkTypes.InternalModuleService<TShippingMethodAdjustment>
-  protected shippingMethodService_: ModulesSdkTypes.InternalModuleService<TShippingMethod>
-  protected lineItemAdjustmentService_: ModulesSdkTypes.InternalModuleService<TLineItemAdjustment>
-  protected lineItemTaxLineService_: ModulesSdkTypes.InternalModuleService<TLineItemTaxLine>
-  protected shippingMethodTaxLineService_: ModulesSdkTypes.InternalModuleService<TShippingMethodTaxLine>
+  protected cartService_: ModulesSdkTypes.IMedusaInternalService<Cart>
+  protected addressService_: ModulesSdkTypes.IMedusaInternalService<Address>
+  protected lineItemService_: ModulesSdkTypes.IMedusaInternalService<LineItem>
+  protected shippingMethodAdjustmentService_: ModulesSdkTypes.IMedusaInternalService<ShippingMethodAdjustment>
+  protected shippingMethodService_: ModulesSdkTypes.IMedusaInternalService<ShippingMethod>
+  protected lineItemAdjustmentService_: ModulesSdkTypes.IMedusaInternalService<LineItemAdjustment>
+  protected lineItemTaxLineService_: ModulesSdkTypes.IMedusaInternalService<LineItemTaxLine>
+  protected shippingMethodTaxLineService_: ModulesSdkTypes.IMedusaInternalService<ShippingMethodTaxLine>
 
   constructor(
     {
@@ -190,7 +179,8 @@ export default class CartModuleService<
     })
   }
 
-  async retrieve(
+  // @ts-expect-error
+  async retrieveCart(
     id: string,
     config?: FindConfig<any> | undefined,
     sharedContext?: Context | undefined
@@ -198,7 +188,7 @@ export default class CartModuleService<
     config ??= {}
     const includeTotals = this.shouldIncludeTotals(config)
 
-    const cart = await super.retrieve(id, config, sharedContext)
+    const cart = await super.retrieveCart(id, config, sharedContext)
 
     if (includeTotals) {
       createRawPropertiesFromBigNumber(decorateCartTotals(cart))
@@ -207,7 +197,8 @@ export default class CartModuleService<
     return cart
   }
 
-  async list(
+  // @ts-expect-error
+  async listCarts(
     filters?: any,
     config?: FindConfig<any> | undefined,
     sharedContext?: Context | undefined
@@ -215,7 +206,7 @@ export default class CartModuleService<
     config ??= {}
     const includeTotals = this.shouldIncludeTotals(config)
 
-    const carts = await super.list(filters, config, sharedContext)
+    const carts = await super.listCarts(filters, config, sharedContext)
 
     if (includeTotals) {
       carts.forEach((cart) => {
@@ -226,7 +217,8 @@ export default class CartModuleService<
     return carts
   }
 
-  async listAndCount(
+  // @ts-expect-error
+  async listAndCountCarts(
     filters?: any,
     config?: FindConfig<any> | undefined,
     sharedContext?: Context | undefined
@@ -234,7 +226,7 @@ export default class CartModuleService<
     config ??= {}
     const includeTotals = this.shouldIncludeTotals(config)
 
-    const [carts, count] = await super.listAndCount(
+    const [carts, count] = await super.listAndCountCarts(
       filters,
       config,
       sharedContext
@@ -249,26 +241,27 @@ export default class CartModuleService<
     return [carts, count]
   }
 
-  async create(
+  // @ts-expect-error
+  async createCarts(
     data: CartTypes.CreateCartDTO[],
     sharedContext?: Context
   ): Promise<CartTypes.CartDTO[]>
 
-  async create(
+  async createCarts(
     data: CartTypes.CreateCartDTO,
     sharedContext?: Context
   ): Promise<CartTypes.CartDTO>
 
   @InjectManager("baseRepository_")
-  async create(
+  async createCarts(
     data: CartTypes.CreateCartDTO[] | CartTypes.CreateCartDTO,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<CartTypes.CartDTO[] | CartTypes.CartDTO> {
     const input = Array.isArray(data) ? data : [data]
 
-    const carts = await this.create_(input, sharedContext)
+    const carts = await this.createCarts_(input, sharedContext)
 
-    const result = await this.list(
+    const result = await this.listCarts(
       { id: carts.map((p) => p!.id) },
       {
         relations: ["shipping_address", "billing_address"],
@@ -282,7 +275,7 @@ export default class CartModuleService<
   }
 
   @InjectTransactionManager("baseRepository_")
-  protected async create_(
+  protected async createCarts_(
     data: CartTypes.CreateCartDTO[],
     @MedusaContext() sharedContext: Context = {}
   ) {
@@ -312,20 +305,23 @@ export default class CartModuleService<
     return createdCarts
   }
 
-  async update(data: CartTypes.UpdateCartDTO[]): Promise<CartTypes.CartDTO[]>
-  async update(
+  // @ts-expect-error
+  async updateCarts(
+    data: CartTypes.UpdateCartDTO[]
+  ): Promise<CartTypes.CartDTO[]>
+  async updateCarts(
     cartId: string,
     data: CartTypes.UpdateCartDataDTO,
     sharedContext?: Context
   ): Promise<CartTypes.CartDTO>
-  async update(
+  async updateCarts(
     selector: Partial<CartTypes.CartDTO>,
     data: CartTypes.UpdateCartDataDTO,
     sharedContext?: Context
   ): Promise<CartTypes.CartDTO[]>
 
   @InjectManager("baseRepository_")
-  async update(
+  async updateCarts(
     dataOrIdOrSelector:
       | CartTypes.UpdateCartDTO[]
       | string
@@ -333,7 +329,11 @@ export default class CartModuleService<
     data?: CartTypes.UpdateCartDataDTO,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<CartTypes.CartDTO[] | CartTypes.CartDTO> {
-    const result = await this.update_(dataOrIdOrSelector, data, sharedContext)
+    const result = await this.updateCarts_(
+      dataOrIdOrSelector,
+      data,
+      sharedContext
+    )
 
     const serializedResult = await this.baseRepository_.serialize<
       CartTypes.CartDTO[]
@@ -345,7 +345,7 @@ export default class CartModuleService<
   }
 
   @InjectTransactionManager("baseRepository_")
-  protected async update_(
+  protected async updateCarts_(
     dataOrIdOrSelector:
       | CartTypes.UpdateCartDTO[]
       | string
@@ -429,7 +429,11 @@ export default class CartModuleService<
     items: CartTypes.CreateLineItemDTO[],
     @MedusaContext() sharedContext: Context = {}
   ): Promise<LineItem[]> {
-    const cart = await this.retrieve(cartId, { select: ["id"] }, sharedContext)
+    const cart = await this.retrieveCart(
+      cartId,
+      { select: ["id"] },
+      sharedContext
+    )
 
     const toUpdate: CreateLineItemDTO[] = items.map((item) => {
       return {
@@ -449,6 +453,7 @@ export default class CartModuleService<
     return await this.lineItemService_.create(data, sharedContext)
   }
 
+  // @ts-ignore
   updateLineItems(
     data: CartTypes.UpdateLineItemWithSelectorDTO[]
   ): Promise<CartTypes.CartLineItemDTO[]>
@@ -541,6 +546,7 @@ export default class CartModuleService<
     return await this.lineItemService_.update(toUpdate, sharedContext)
   }
 
+  // @ts-ignore
   async createAddresses(
     data: CartTypes.CreateAddressDTO,
     sharedContext?: Context
@@ -577,6 +583,7 @@ export default class CartModuleService<
     return await this.addressService_.create(data, sharedContext)
   }
 
+  // @ts-ignore
   async updateAddresses(
     data: CartTypes.UpdateAddressDTO,
     sharedContext?: Context
@@ -664,7 +671,11 @@ export default class CartModuleService<
     data: CartTypes.CreateShippingMethodForSingleCartDTO[],
     @MedusaContext() sharedContext: Context = {}
   ): Promise<ShippingMethod[]> {
-    const cart = await this.retrieve(cartId, { select: ["id"] }, sharedContext)
+    const cart = await this.retrieveCart(
+      cartId,
+      { select: ["id"] },
+      sharedContext
+    )
 
     const methods = data.map((method) => {
       return {
@@ -710,7 +721,7 @@ export default class CartModuleService<
   ): Promise<CartTypes.LineItemAdjustmentDTO[]> {
     let addedAdjustments: LineItemAdjustment[] = []
     if (isString(cartIdOrData)) {
-      const cart = await this.retrieve(
+      const cart = await this.retrieveCart(
         cartIdOrData,
         { select: ["id"], relations: ["items"] },
         sharedContext
@@ -756,7 +767,7 @@ export default class CartModuleService<
     )[],
     @MedusaContext() sharedContext: Context = {}
   ): Promise<CartTypes.LineItemAdjustmentDTO[]> {
-    const cart = await this.retrieve(
+    const cart = await this.retrieveCart(
       cartId,
       { select: ["id"], relations: ["items.adjustments"] },
       sharedContext
@@ -811,7 +822,7 @@ export default class CartModuleService<
     )[],
     @MedusaContext() sharedContext: Context = {}
   ): Promise<CartTypes.ShippingMethodAdjustmentDTO[]> {
-    const cart = await this.retrieve(
+    const cart = await this.retrieveCart(
       cartId,
       { select: ["id"], relations: ["shipping_methods.adjustments"] },
       sharedContext
@@ -885,7 +896,7 @@ export default class CartModuleService<
   > {
     let addedAdjustments: ShippingMethodAdjustment[] = []
     if (isString(cartIdOrData)) {
-      const cart = await this.retrieve(
+      const cart = await this.retrieveCart(
         cartIdOrData,
         { select: ["id"], relations: ["shipping_methods"] },
         sharedContext
@@ -959,7 +970,7 @@ export default class CartModuleService<
     let addedTaxLines: LineItemTaxLine[]
     if (isString(cartIdOrData)) {
       // existence check
-      await this.retrieve(cartIdOrData, { select: ["id"] }, sharedContext)
+      await this.retrieveCart(cartIdOrData, { select: ["id"] }, sharedContext)
 
       const lines = Array.isArray(taxLines) ? taxLines : [taxLines]
 
@@ -998,7 +1009,7 @@ export default class CartModuleService<
     )[],
     @MedusaContext() sharedContext: Context = {}
   ): Promise<CartTypes.LineItemTaxLineDTO[]> {
-    const cart = await this.retrieve(
+    const cart = await this.retrieveCart(
       cartId,
       { select: ["id"], relations: ["items.tax_lines"] },
       sharedContext
@@ -1075,7 +1086,7 @@ export default class CartModuleService<
     let addedTaxLines: ShippingMethodTaxLine[]
     if (isString(cartIdOrData)) {
       // existence check
-      await this.retrieve(cartIdOrData, { select: ["id"] }, sharedContext)
+      await this.retrieveCart(cartIdOrData, { select: ["id"] }, sharedContext)
 
       const lines = Array.isArray(taxLines) ? taxLines : [taxLines]
 
@@ -1114,7 +1125,7 @@ export default class CartModuleService<
     )[],
     @MedusaContext() sharedContext: Context = {}
   ): Promise<CartTypes.ShippingMethodTaxLineDTO[]> {
-    const cart = await this.retrieve(
+    const cart = await this.retrieveCart(
       cartId,
       { select: ["id"], relations: ["shipping_methods.tax_lines"] },
       sharedContext

@@ -2,14 +2,27 @@ import { MedusaApp } from "@medusajs/modules-sdk"
 import {
   TransactionStepTimeoutError,
   TransactionTimeoutError,
+  WorkflowManager,
 } from "@medusajs/orchestration"
-import { RemoteQueryFunction } from "@medusajs/types"
-import { TransactionHandlerType, TransactionStepState } from "@medusajs/utils"
-import { IWorkflowEngineService } from "@medusajs/workflows-sdk"
+import {
+  IWorkflowEngineService,
+  MedusaContainer,
+  RemoteQueryFunction,
+} from "@medusajs/types"
+import {
+  ContainerRegistrationKeys,
+  TransactionHandlerType,
+  TransactionStepState,
+  createMedusaContainer,
+} from "@medusajs/utils"
+import { asValue } from "awilix"
 import { knex } from "knex"
 import { setTimeout } from "timers/promises"
 import "../__fixtures__"
+import { createScheduled } from "../__fixtures__/workflow_scheduled"
 import { DB_URL, TestDatabase } from "../utils"
+
+jest.setTimeout(100000)
 
 const sharedPgConnection = knex<any, any>({
   client: "pg",
@@ -25,42 +38,47 @@ const afterEach_ = async () => {
 }
 
 describe("Workflow Orchestrator module", function () {
-  describe("Testing basic workflow", function () {
-    let workflowOrcModule: IWorkflowEngineService
-    let query: RemoteQueryFunction
+  let workflowOrcModule: IWorkflowEngineService
+  let query: RemoteQueryFunction
+  let sharedContainer_: MedusaContainer
 
-    afterEach(afterEach_)
+  beforeAll(async () => {
+    const container = createMedusaContainer()
+    container.register(ContainerRegistrationKeys.LOGGER, asValue(console))
 
-    beforeAll(async () => {
-      const {
-        runMigrations,
-        query: remoteQuery,
-        modules,
-      } = await MedusaApp({
-        sharedResourcesConfig: {
-          database: {
-            connection: sharedPgConnection,
-          },
+    const {
+      runMigrations,
+      query: remoteQuery,
+      modules,
+      sharedContainer,
+    } = await MedusaApp({
+      sharedContainer: container,
+      sharedResourcesConfig: {
+        database: {
+          connection: sharedPgConnection,
         },
-        modulesConfig: {
-          workflows: {
-            resolve: __dirname + "/../..",
-            options: {
-              redis: {
-                url: "localhost:6379",
-              },
+      },
+      modulesConfig: {
+        workflows: {
+          resolve: __dirname + "/../..",
+          options: {
+            redis: {
+              url: "localhost:6379",
             },
           },
         },
-      })
-
-      query = remoteQuery
-
-      await runMigrations()
-
-      workflowOrcModule = modules.workflows as unknown as IWorkflowEngineService
+      },
     })
 
+    query = remoteQuery
+    sharedContainer_ = sharedContainer!
+
+    await runMigrations()
+
+    workflowOrcModule = modules.workflows as unknown as IWorkflowEngineService
+  })
+
+  describe("Testing basic workflow", function () {
     afterEach(afterEach_)
 
     it("should return a list of workflow executions and remove after completed when there is no retentionTime set", async () => {
@@ -295,6 +313,47 @@ describe("Workflow Orchestrator module", function () {
       })
 
       expect(onFinish).toHaveBeenCalledTimes(0)
+    })
+  })
+
+  // Note: These tests depend on actual Redis instance and waiting for the scheduled jobs to run, which isn't great.
+  // Mocking bullmq, however, would make the tests close to useless, so we can keep them very minimal and serve as smoke tests.
+  describe("Scheduled workflows", () => {
+    it("should execute a scheduled workflow", async () => {
+      const spy = createScheduled("standard")
+      await setTimeout(3100)
+      expect(spy).toHaveBeenCalledTimes(3)
+    })
+
+    it("should stop executions after the set number of executions", async () => {
+      const spy = await createScheduled("num-executions", {
+        cron: "* * * * * *",
+        numberOfExecutions: 2,
+      })
+      await setTimeout(3100)
+      expect(spy).toHaveBeenCalledTimes(2)
+    })
+
+    it("should remove scheduled workflow if workflow no longer exists", async () => {
+      const logger = sharedContainer_.resolve<Logger>(
+        ContainerRegistrationKeys.LOGGER
+      )
+
+      const spy = await createScheduled("remove-scheduled", {
+        cron: "* * * * * *",
+      })
+      const logSpy = jest.spyOn(logger, "warn")
+
+      await setTimeout(1100)
+      expect(spy).toHaveBeenCalledTimes(1)
+
+      WorkflowManager["workflows"].delete("remove-scheduled")
+
+      await setTimeout(1100)
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(logSpy).toHaveBeenCalledWith(
+        "Tried to execute a scheduled workflow with ID remove-scheduled that does not exist, removing it from the scheduler."
+      )
     })
   })
 })

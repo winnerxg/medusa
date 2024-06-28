@@ -6,8 +6,10 @@ import {
 import { TransactionStep, TransactionStepHandler } from "./transaction-step"
 import {
   DistributedTransactionEvent,
+  StepFeatures,
   TransactionHandlerType,
   TransactionModelOptions,
+  TransactionOptions,
   TransactionState,
   TransactionStepsDefinition,
   TransactionStepStatus,
@@ -28,6 +30,10 @@ export type TransactionFlow = {
   options?: TransactionModelOptions
   definition: TransactionStepsDefinition
   transactionId: string
+  metadata?: {
+    eventGroupId?: string
+    [key: string]: unknown
+  }
   hasAsyncSteps: boolean
   hasFailedSteps: boolean
   hasWaitingSteps: boolean
@@ -52,12 +58,22 @@ export class TransactionOrchestrator extends EventEmitter {
   private compensateSteps: string[] = []
 
   public static DEFAULT_RETRIES = 0
+
+  private static workflowOptions: {
+    [modelId: string]: TransactionOptions
+  } = {}
+
+  public static getWorkflowOptions(modelId: string): TransactionOptions {
+    return this.workflowOptions[modelId]
+  }
+
   constructor(
     public id: string,
     private definition: TransactionStepsDefinition,
     private options?: TransactionModelOptions
   ) {
     super()
+    this.parseFlowOptions()
   }
 
   private static SEPARATOR = ":"
@@ -405,6 +421,7 @@ export class TransactionOrchestrator extends EventEmitter {
     }
 
     const flow = transaction.getFlow()
+    const options = TransactionOrchestrator.getWorkflowOptions(flow.modelId)
 
     if (!hasStepTimedOut) {
       step.changeStatus(TransactionStepStatus.OK)
@@ -416,7 +433,7 @@ export class TransactionOrchestrator extends EventEmitter {
       step.changeState(TransactionStepState.DONE)
     }
 
-    if (step.definition.async || flow.options?.storeExecution) {
+    if (step.definition.async || options?.storeExecution) {
       await transaction.saveCheckpoint()
     }
 
@@ -493,6 +510,8 @@ export class TransactionOrchestrator extends EventEmitter {
     }
 
     const flow = transaction.getFlow()
+    const options = TransactionOrchestrator.getWorkflowOptions(flow.modelId)
+
     const cleaningUp: Promise<unknown>[] = []
 
     const hasTimedOut = step.getStates().state === TransactionStepState.TIMEOUT
@@ -532,7 +551,7 @@ export class TransactionOrchestrator extends EventEmitter {
       }
     }
 
-    if (step.definition.async || flow.options?.storeExecution) {
+    if (step.definition.async || options?.storeExecution) {
       await transaction.saveCheckpoint()
     }
 
@@ -559,6 +578,7 @@ export class TransactionOrchestrator extends EventEmitter {
       }
 
       const flow = transaction.getFlow()
+      const options = TransactionOrchestrator.getWorkflowOptions(flow.modelId)
       const nextSteps = await this.checkAllSteps(transaction)
       const execution: Promise<void | unknown>[] = []
 
@@ -760,7 +780,7 @@ export class TransactionOrchestrator extends EventEmitter {
         }
       }
 
-      if (hasSyncSteps && flow.options?.storeExecution) {
+      if (hasSyncSteps && options?.storeExecution) {
         await transaction.saveCheckpoint()
       }
 
@@ -794,7 +814,7 @@ export class TransactionOrchestrator extends EventEmitter {
       flow.state = TransactionState.INVOKING
       flow.startedAt = Date.now()
 
-      if (this.options?.store) {
+      if (this.getOptions().store) {
         await transaction.saveCheckpoint(
           flow.hasAsyncSteps ? 0 : TransactionOrchestrator.DEFAULT_TTL
         )
@@ -839,7 +859,7 @@ export class TransactionOrchestrator extends EventEmitter {
     await this.executeNext(transaction)
   }
 
-  private createTransactionFlow(transactionId: string): TransactionFlow {
+  private parseFlowOptions() {
     const [steps, features] = TransactionOrchestrator.buildSteps(
       this.definition
     )
@@ -850,21 +870,47 @@ export class TransactionOrchestrator extends EventEmitter {
     const hasStepTimeouts = features.hasStepTimeouts
     const hasRetriesTimeout = features.hasRetriesTimeout
     const hasTransactionTimeout = !!this.options.timeout
+    const isIdempotent = !!this.options.idempotent
 
     if (hasAsyncSteps) {
       this.options.store = true
     }
 
-    if (hasStepTimeouts || hasRetriesTimeout || hasTransactionTimeout) {
+    if (
+      hasStepTimeouts ||
+      hasRetriesTimeout ||
+      hasTransactionTimeout ||
+      isIdempotent
+    ) {
       this.options.store = true
       this.options.storeExecution = true
     }
+
+    const parsedOptions = {
+      ...this.options,
+      hasAsyncSteps,
+      hasStepTimeouts,
+      hasRetriesTimeout,
+    }
+    TransactionOrchestrator.workflowOptions[this.id] = parsedOptions
+
+    return [steps, features]
+  }
+
+  private createTransactionFlow(
+    transactionId: string,
+    flowMetadata?: TransactionFlow["metadata"]
+  ): TransactionFlow {
+    const [steps, features] = TransactionOrchestrator.buildSteps(
+      this.definition
+    )
 
     const flow: TransactionFlow = {
       modelId: this.id,
       options: this.options,
       transactionId: transactionId,
-      hasAsyncSteps,
+      metadata: flowMetadata,
+      hasAsyncSteps: features.hasAsyncSteps,
       hasFailedSteps: false,
       hasSkippedSteps: false,
       hasWaitingSteps: false,
@@ -904,14 +950,7 @@ export class TransactionOrchestrator extends EventEmitter {
   private static buildSteps(
     flow: TransactionStepsDefinition,
     existingSteps?: { [key: string]: TransactionStep }
-  ): [
-    { [key: string]: TransactionStep },
-    {
-      hasAsyncSteps: boolean
-      hasStepTimeouts: boolean
-      hasRetriesTimeout: boolean
-    }
-  ] {
+  ): [{ [key: string]: TransactionStep }, StepFeatures] {
     const states: { [key: string]: TransactionStep } = {
       [TransactionOrchestrator.ROOT_STEP]: {
         id: TransactionOrchestrator.ROOT_STEP,
@@ -933,12 +972,7 @@ export class TransactionOrchestrator extends EventEmitter {
     while (queue.length > 0) {
       const { obj, level } = queue.shift()
 
-      for (const key in obj) {
-        // eslint-disable-next-line no-prototype-builtins
-        if (!obj.hasOwnProperty(key)) {
-          continue
-        }
-
+      for (const key of Object.keys(obj)) {
         if (typeof obj[key] === "object" && obj[key] !== null) {
           queue.push({ obj: obj[key], level: [...level] })
         } else if (key === "action") {
@@ -1006,11 +1040,13 @@ export class TransactionOrchestrator extends EventEmitter {
    * @param transactionId - unique identifier of the transaction
    * @param handler - function to handle action of the transaction
    * @param payload - payload to be passed to all the transaction steps
+   * @param flowMetadata - flow metadata which can include event group id for example
    */
   public async beginTransaction(
     transactionId: string,
     handler: TransactionStepHandler,
-    payload?: unknown
+    payload?: unknown,
+    flowMetadata?: TransactionFlow["metadata"]
   ): Promise<DistributedTransaction> {
     const existingTransaction =
       await TransactionOrchestrator.loadTransactionById(this.id, transactionId)
@@ -1018,7 +1054,7 @@ export class TransactionOrchestrator extends EventEmitter {
     let newTransaction = false
     let modelFlow: TransactionFlow
     if (!existingTransaction) {
-      modelFlow = this.createTransactionFlow(transactionId)
+      modelFlow = this.createTransactionFlow(transactionId, flowMetadata)
       newTransaction = true
     } else {
       modelFlow = existingTransaction.flow
@@ -1032,7 +1068,11 @@ export class TransactionOrchestrator extends EventEmitter {
       existingTransaction?.context
     )
 
-    if (newTransaction && this.options?.store && this.options?.storeExecution) {
+    if (
+      newTransaction &&
+      this.getOptions().store &&
+      this.getOptions().storeExecution
+    ) {
       await transaction.saveCheckpoint(
         modelFlow.hasAsyncSteps ? 0 : TransactionOrchestrator.DEFAULT_TTL
       )

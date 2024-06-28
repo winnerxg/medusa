@@ -1,4 +1,3 @@
-import type { Knex } from "knex"
 import { mergeTypeDefs } from "@graphql-tools/merge"
 import { makeExecutableSchema } from "@graphql-tools/schema"
 import { RemoteFetchDataCallback } from "@medusajs/orchestration"
@@ -19,19 +18,17 @@ import type {
 } from "@medusajs/types"
 import {
   ContainerRegistrationKeys,
-  ModulesSdkUtils,
   createMedusaContainer,
   isObject,
   isString,
+  Modules,
+  ModulesSdkUtils,
   promiseAll,
 } from "@medusajs/utils"
 import { asValue } from "awilix"
-import {
-  MODULE_PACKAGE_NAMES,
-  ModuleRegistrationName,
-  Modules,
-} from "./definitions"
-import { MedusaModule } from "./medusa-module"
+import type { Knex } from "knex"
+import { MODULE_PACKAGE_NAMES, ModuleRegistrationName } from "./definitions"
+import { MedusaModule, RegisterModuleJoinerConfig } from "./medusa-module"
 import { RemoteLink } from "./remote-link"
 import { RemoteQuery } from "./remote-query"
 import { MODULE_RESOURCE_TYPE, MODULE_SCOPE } from "./types"
@@ -229,6 +226,7 @@ export type MedusaAppOutput = {
   revertMigrations: RunMigrationFn
   onApplicationShutdown: () => Promise<void>
   onApplicationPrepareShutdown: () => Promise<void>
+  sharedContainer?: MedusaContainer
 }
 
 export type MedusaAppOptions = {
@@ -240,7 +238,7 @@ export type MedusaAppOptions = {
   modulesConfigPath?: string
   modulesConfigFileName?: string
   modulesConfig?: MedusaModuleConfig
-  linkModules?: ModuleJoinerConfig | ModuleJoinerConfig[]
+  linkModules?: RegisterModuleJoinerConfig | RegisterModuleJoinerConfig[]
   remoteFetchData?: RemoteFetchDataCallback
   injectedDependencies?: any
   onApplicationStartCb?: () => void
@@ -260,7 +258,6 @@ async function MedusaApp_({
   linkModules,
   remoteFetchData,
   injectedDependencies = {},
-  onApplicationStartCb,
   migrationOnly = false,
   loaderOnly = false,
   workerMode = "server",
@@ -363,6 +360,20 @@ async function MedusaApp_({
       allowUnregistered: true,
     })
 
+  linkModules ??= []
+  if (!Array.isArray(linkModules)) {
+    linkModules = [linkModules]
+  }
+  linkModules.push(...MedusaModule.getCustomLinks())
+
+  const allLoadedJoinerConfigs = MedusaModule.getAllJoinerConfigs()
+  for (let linkIdx = 0; linkIdx < linkModules.length; linkIdx++) {
+    const customLink: any = linkModules[linkIdx]
+    if (typeof customLink === "function") {
+      linkModules[linkIdx] = customLink(allLoadedJoinerConfigs)
+    }
+  }
+
   const {
     remoteLink,
     runMigrations: linkModuleMigration,
@@ -460,6 +471,7 @@ async function MedusaApp_({
     notFound,
     runMigrations,
     revertMigrations,
+    sharedContainer: sharedContainer_,
   }
 }
 

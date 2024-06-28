@@ -38,12 +38,12 @@ export const useComboboxData = <
 }) => {
   const { searchValue, onSearchValueChange, query } = useDebouncedSearch()
 
-  const queryIntialDataBy = defaultValueKey || "id"
+  const queryInitialDataBy = defaultValueKey || "id"
   const { data: initialData } = useQuery({
     queryKey: queryKey,
     queryFn: async () => {
       return queryFn({
-        [queryIntialDataBy]: defaultValue,
+        [queryInitialDataBy]: defaultValue,
         limit: Array.isArray(defaultValue) ? defaultValue.length : 1,
       } as TParams)
     },
@@ -53,7 +53,7 @@ export const useComboboxData = <
   const { data, ...rest } = useInfiniteQuery({
     queryKey: [...queryKey, query],
     queryFn: async ({ pageParam = 0 }) => {
-      return queryFn({
+      return await queryFn({
         q: query,
         limit: pageSize,
         offset: pageParam,
@@ -77,7 +77,11 @@ export const useComboboxData = <
   const disabled = !rest.isPending && !options.length && !searchValue
 
   // // make sure that the default value is included in the option, if its not in options already
-  if (defaultValue && !options.find((o) => o.value === defaultValue)) {
+  if (
+    defaultValue &&
+    defaultOptions.length &&
+    !options.find((o) => o.value === defaultValue)
+  ) {
     options.unshift(defaultOptions[0])
   }
 

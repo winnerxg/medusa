@@ -26,10 +26,9 @@ const { success, authIdentity, error } =
   } as AuthenticationInput)
 
 if (!success) {
+  // incorrect authentication details
   throw new Error(error)
 }
-
-// user is authenticated
 ```
 
 ### Third-Party and Social Authentication
@@ -85,11 +84,11 @@ For example:
   ```ts title="src/api/store/custom/route.ts"
   import { 
     MedusaRequest, 
-    MedusaResponse
+    MedusaResponse,
   } from "@medusajs/medusa"
   import { IAuthModuleService } from "@medusajs/types"
   import { 
-    ModuleRegistrationName
+    ModuleRegistrationName,
   } from "@medusajs/modules-sdk"
 
   export async function GET(
@@ -100,7 +99,8 @@ For example:
       req.scope.resolve(ModuleRegistrationName.AUTH)
 
     res.json({
-      authIdentitys: authModuleService.list(),
+      authIdentitys: 
+        await authModuleService.listAuthIdentities(),
     })
   }
   ```
@@ -112,7 +112,7 @@ For example:
   import { SubscriberArgs } from "@medusajs/medusa"
   import { IAuthModuleService } from "@medusajs/types"
   import { 
-    ModuleRegistrationName
+    ModuleRegistrationName,
   } from "@medusajs/modules-sdk"
 
   export default async function subscriberHandler({
@@ -121,7 +121,8 @@ For example:
     const authModuleService: IAuthModuleService =
       container.resolve(ModuleRegistrationName.AUTH)
 
-    const authIdentitys = await authModuleService.list()
+    const authIdentitys = await authModuleService
+      .listAuthIdentities()
   }
   ```
 
@@ -132,7 +133,7 @@ For example:
   import { createStep } from "@medusajs/workflows-sdk"
   import { IAuthModuleService } from "@medusajs/types"
   import { 
-    ModuleRegistrationName
+    ModuleRegistrationName,
   } from "@medusajs/modules-sdk"
 
   const step1 = createStep(
@@ -142,7 +143,8 @@ For example:
       container.resolve(
         ModuleRegistrationName.AUTH
       )
-    const authIdentitys = await authModuleService.list()
+    const authIdentitys = await authModuleService
+      .listAuthIdentities()
   })
   ```
 

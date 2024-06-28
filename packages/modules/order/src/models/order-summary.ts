@@ -10,8 +10,9 @@ import {
   OnInit,
   PrimaryKey,
   Property,
+  Rel,
 } from "@mikro-orm/core"
-import { Order } from "@models"
+import Order from "./order"
 
 type OrderSummaryTotals = {
   total: BigNumber
@@ -71,7 +72,7 @@ export default class OrderSummary {
   @ManyToOne(() => Order, {
     persist: false,
   })
-  order: Order
+  order: Rel<Order>
 
   @Property({
     columnType: "integer",

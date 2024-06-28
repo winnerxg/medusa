@@ -13,24 +13,49 @@ import {
   OptionalProps,
   PrimaryKey,
   Property,
+  Rel,
 } from "@mikro-orm/core"
+import Claim from "./claim"
+import Exchange from "./exchange"
 import Order from "./order"
+import Return from "./return"
 
 type OptionalLineItemProps = DAL.EntityDateColumns
 
 const ReferenceIdIndex = createPsqlIndexStatementHelper({
   tableName: "order_transaction",
   columns: "reference_id",
+  where: "deleted_at IS NOT NULL",
 })
 
 const OrderIdIndex = createPsqlIndexStatementHelper({
   tableName: "order_transaction",
   columns: "order_id",
+  where: "deleted_at IS NOT NULL",
+})
+
+const ReturnIdIndex = createPsqlIndexStatementHelper({
+  tableName: "order_transaction",
+  columns: "return_id",
+  where: "return_id IS NOT NULL AND deleted_at IS NOT NULL",
+})
+
+const ExchangeIdIndex = createPsqlIndexStatementHelper({
+  tableName: "order_item",
+  columns: ["exchange_id"],
+  where: "exchange_id IS NOT NULL AND deleted_at IS NOT NULL",
+})
+
+const ClaimIdIndex = createPsqlIndexStatementHelper({
+  tableName: "order_item",
+  columns: ["claim_id"],
+  where: "claim_id IS NOT NULL AND deleted_at IS NOT NULL",
 })
 
 const CurrencyCodeIndex = createPsqlIndexStatementHelper({
   tableName: "order_transaction",
   columns: "currency_code",
+  where: "deleted_at IS NOT NULL",
 })
 
 const DeletedAtIndex = createPsqlIndexStatementHelper({
@@ -66,7 +91,52 @@ export default class Transaction {
   @ManyToOne(() => Order, {
     persist: false,
   })
-  order: Order
+  order: Rel<Order>
+
+  @ManyToOne({
+    entity: () => Return,
+    mapToPk: true,
+    fieldName: "return_id",
+    columnType: "text",
+    nullable: true,
+  })
+  @ReturnIdIndex.MikroORMIndex()
+  return_id: string | null = null
+
+  @ManyToOne(() => Return, {
+    persist: false,
+  })
+  return: Rel<Return>
+
+  @ManyToOne({
+    entity: () => Exchange,
+    mapToPk: true,
+    fieldName: "exchange_id",
+    columnType: "text",
+    nullable: true,
+  })
+  @ExchangeIdIndex.MikroORMIndex()
+  exchange_id: string | null
+
+  @ManyToOne(() => Exchange, {
+    persist: false,
+  })
+  exchange: Rel<Exchange>
+
+  @ManyToOne({
+    entity: () => Claim,
+    mapToPk: true,
+    fieldName: "claim_id",
+    columnType: "text",
+    nullable: true,
+  })
+  @ClaimIdIndex.MikroORMIndex()
+  claim_id: string | null
+
+  @ManyToOne(() => Claim, {
+    persist: false,
+  })
+  claim: Rel<Claim>
 
   @Property({
     columnType: "integer",
@@ -120,11 +190,17 @@ export default class Transaction {
   onCreate() {
     this.id = generateEntityId(this.id, "ordtrx")
     this.order_id ??= this.order?.id
+    this.return_id ??= this.return?.id
+    this.claim_id ??= this.claim?.id
+    this.exchange_id ??= this.exchange?.id
   }
 
   @OnInit()
   onInit() {
     this.id = generateEntityId(this.id, "ordtrx")
     this.order_id ??= this.order?.id
+    this.return_id ??= this.return?.id
+    this.claim_id ??= this.claim?.id
+    this.exchange_id ??= this.exchange?.id
   }
 }

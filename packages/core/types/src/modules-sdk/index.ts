@@ -9,9 +9,10 @@ import { MedusaContainer } from "../common"
 import { RepositoryService } from "../dal"
 import { Logger } from "../logger"
 
-export type Constructor<T> = new (...args: any[]) => T
+export type Constructor<T> = new (...args: any[]) => T | (new () => T)
+
 export * from "../common/medusa-container"
-export * from "./internal-module-service"
+export * from "./medusa-internal-service"
 export * from "./module-provider"
 
 export type LogLevel =
@@ -128,28 +129,39 @@ export type ModulesResponse = {
   resolution: string | false
 }[]
 
-type ExtraFieldType =
-  | "date"
-  | "time"
-  | "datetime"
-  | "bigint"
-  | "blob"
-  | "uint8array"
-  | "array"
-  | "enumArray"
-  | "enum"
-  | "json"
-  | "integer"
-  | "smallint"
-  | "tinyint"
-  | "mediumint"
-  | "float"
-  | "double"
-  | "boolean"
-  | "decimal"
-  | "string"
-  | "uuid"
-  | "text"
+export type LinkModulesExtraFields = Record<
+  string,
+  {
+    type:
+      | "date"
+      | "time"
+      | "datetime"
+      | "bigint"
+      | "blob"
+      | "uint8array"
+      | "array"
+      | "enumArray"
+      | "enum"
+      | "json"
+      | "integer"
+      | "smallint"
+      | "tinyint"
+      | "mediumint"
+      | "float"
+      | "double"
+      | "boolean"
+      | "decimal"
+      | "string"
+      | "uuid"
+      | "text"
+    defaultValue?: string
+    nullable?: boolean
+    /**
+     * Mikro-orm options for the column
+     */
+    options?: Record<string, unknown>
+  }
+>
 
 export type ModuleJoinerConfig = Omit<
   JoinerServiceConfig,
@@ -201,18 +213,7 @@ export type ModuleJoinerConfig = Omit<
      * Prefix for the id column. If not provided it is "link"
      */
     idPrefix?: string
-    extraFields?: Record<
-      string,
-      {
-        type: ExtraFieldType
-        defaultValue?: string
-        nullable?: boolean
-        /**
-         * Mikro-orm options for the column
-         */
-        options?: Record<string, unknown>
-      }
-    >
+    extraFields?: LinkModulesExtraFields
   }
 }
 

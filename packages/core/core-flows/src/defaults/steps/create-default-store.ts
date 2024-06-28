@@ -1,6 +1,6 @@
 import { ModuleRegistrationName } from "@medusajs/modules-sdk"
 import { CreateStoreDTO, IStoreModuleService, StoreDTO } from "@medusajs/types"
-import { StepResponse, createStep } from "@medusajs/workflows-sdk"
+import { createStep, StepResponse } from "@medusajs/workflows-sdk"
 import { createStoresWorkflow } from "../../store"
 
 type CreateDefaultStoreStepInput = {
@@ -14,7 +14,7 @@ export const createDefaultStoreStep = createStep(
     const storeService = container.resolve(ModuleRegistrationName.STORE)
 
     let shouldDelete = false
-    let [store] = await storeService.list({}, { take: 1 })
+    let [store] = await storeService.listStores({}, { take: 1 })
 
     /**
      * @todo
@@ -28,8 +28,9 @@ export const createDefaultStoreStep = createStep(
             {
               // TODO: Revisit for a more sophisticated approach
               ...data.store,
-              supported_currency_codes: ["eur"],
-              default_currency_code: "eur",
+              supported_currencies: [
+                { currency_code: "eur", is_default: true },
+              ],
             },
           ],
         },
@@ -55,6 +56,6 @@ export const createDefaultStoreStep = createStep(
       ModuleRegistrationName.STORE
     )
 
-    await service.delete(data.storeId)
+    await service.deleteStores(data.storeId)
   }
 )

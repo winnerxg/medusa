@@ -30,7 +30,11 @@ function RuleBlock({ rule }: RuleProps) {
         <BadgeListSummary
           inline
           className="!txt-compact-small-plus"
-          list={rule.values.map((v) => v.label)}
+          list={
+            rule.field_type === "number"
+              ? [rule.values]
+              : rule.values?.map((v) => v.label)
+          }
         />
       </div>
     </div>
@@ -78,7 +82,7 @@ export const PromotionConditionsSection = ({
             className="h-[180px]"
             title="No records yet."
             message="Please check back later or add a target condition today"
-            action={{ to: "/promotions", label: "Add condition" }}
+            action={{ to: `${ruleType}/edit`, label: "Add condition" }}
             buttonVariant="transparentIconLeft"
           />
         )}

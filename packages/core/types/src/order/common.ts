@@ -2,7 +2,7 @@ import { BaseFilterable } from "../dal"
 import { OperatorMap } from "../dal/utils"
 import { FulfillmentDTO } from "../fulfillment"
 import { PaymentCollectionDTO } from "../payment"
-import { BigNumberRawValue, BigNumberValue } from "../totals"
+import { BigNumberInput, BigNumberRawValue, BigNumberValue } from "../totals"
 
 export type ChangeActionType =
   | "CANCEL"
@@ -478,6 +478,17 @@ export interface OrderLineItemTotalsDTO {
   discount_tax_total: BigNumberValue
 
   /**
+   * The refundable total of the order line item.
+   */
+  refundable_total: BigNumberValue
+
+  /**
+   * The refundable total per unit of the order line item.
+   */
+
+  refundable_total_per_unit: BigNumberValue
+
+  /**
    * The raw original total of the order line item.
    */
   raw_original_total: BigNumberRawValue
@@ -531,6 +542,16 @@ export interface OrderLineItemTotalsDTO {
    * The raw discount tax total of the order line item.
    */
   raw_discount_tax_total: BigNumberRawValue
+
+  /**
+   * The raw refundable total of the order line item..
+   */
+  raw_refundable_total: BigNumberRawValue
+
+  /**
+   * The raw  refundable total per unit of the order line item.
+   */
+  raw_refundable_total_per_unit: BigNumberRawValue
 }
 
 export interface OrderLineItemDTO extends OrderLineItemTotalsDTO {
@@ -1109,6 +1130,31 @@ export interface OrderDTO {
   raw_original_shipping_tax_total: BigNumberRawValue
 }
 
+type ReturnStatus = "requested" | "received" | "partially_received" | "canceled"
+
+export interface ReturnDTO extends Omit<OrderDTO, "status" | "version"> {
+  status: ReturnStatus
+  refund_amount?: BigNumberValue
+}
+
+export interface OrderClaimDTO
+  extends Omit<OrderDTO, "status" | "version" | "items"> {
+  claim_items: any[]
+  additional_items: any[]
+  return?: ReturnDTO
+  no_notification?: boolean
+  refund_amount?: BigNumberValue
+}
+
+export interface OrderExchangeDTO
+  extends Omit<OrderDTO, "status" | "version" | "items"> {
+  return_items: any[]
+  additional_items: any[]
+  no_notification?: boolean
+  difference_due?: BigNumberValue
+  return?: ReturnDTO
+}
+
 export type PaymentStatus =
   | "not_paid"
   | "awaiting"
@@ -1524,4 +1570,19 @@ export interface FilterableOrderReturnReasonProps {
   value?: string | string[]
   label?: string
   description?: string
+}
+
+export interface OrderChangeReturn {
+  items: {
+    item_id: string
+    order_id: string
+    fulfilled_quantity: BigNumberInput
+    shipped_quantity: BigNumberInput
+    return_requested_quantity: BigNumberInput
+    return_received_quantity: BigNumberInput
+    return_dismissed_quantity: BigNumberInput
+    written_off_quantity: BigNumberInput
+    [key: string]: any
+  }[]
+  shippingMethods: any[]
 }

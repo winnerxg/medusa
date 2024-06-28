@@ -1,7 +1,9 @@
 import { LinkDefinition } from "@medusajs/modules-sdk"
 import {
   BatchMethodResponse,
+  HttpTypes,
   MedusaContainer,
+  PriceDTO,
   ProductDTO,
   ProductVariantDTO,
 } from "@medusajs/types"
@@ -24,6 +26,7 @@ export const remapKeysForProduct = (selectFields: string[]) => {
   const productFields = selectFields.filter(
     (fieldName: string) => !isPricing(fieldName)
   )
+
   const pricingFields = selectFields
     .filter((fieldName: string) => isPricing(fieldName))
     .map((fieldName: string) =>
@@ -37,6 +40,7 @@ export const remapKeysForVariant = (selectFields: string[]) => {
   const variantFields = selectFields.filter(
     (fieldName: string) => !isPricing(fieldName)
   )
+
   const pricingFields = selectFields
     .filter((fieldName: string) => isPricing(fieldName))
     .map((fieldName: string) =>
@@ -46,19 +50,24 @@ export const remapKeysForVariant = (selectFields: string[]) => {
   return [...variantFields, ...pricingFields]
 }
 
-export const remapProductResponse = (product: ProductDTO) => {
+export const remapProductResponse = (
+  product: ProductDTO
+): HttpTypes.AdminProduct => {
   return {
     ...product,
     variants: product.variants?.map(remapVariantResponse),
-  }
+    // TODO: Remove any once all typings are cleaned up
+  } as any
 }
 
-export const remapVariantResponse = (variant: ProductVariantDTO) => {
+export const remapVariantResponse = (
+  variant: ProductVariantDTO
+): HttpTypes.AdminProductVariant => {
   if (!variant) {
     return variant
   }
 
-  return {
+  const resp = {
     ...variant,
     prices: (variant as any).price_set?.prices?.map((price) => ({
       id: price.id,
@@ -69,27 +78,28 @@ export const remapVariantResponse = (variant: ProductVariantDTO) => {
       variant_id: variant.id,
       created_at: price.created_at,
       updated_at: price.updated_at,
+      rules: buildRules(price),
     })),
-    price_set: undefined,
   }
+
+  delete (resp as any).price_set
+
+  // TODO: Remove any once all typings are cleaned up
+  return resp as any
 }
 
-export const refetchProduct = async (
-  productId: string,
-  scope: MedusaContainer,
-  fields: string[]
-) => {
-  const remoteQuery = scope.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
-  const queryObject = remoteQueryObjectFromString({
-    entryPoint: "product",
-    variables: {
-      filters: { id: productId },
-    },
-    fields: remapKeysForProduct(fields ?? []),
-  })
+export const buildRules = (price: PriceDTO) => {
+  const rules: Record<string, string> = {}
 
-  const products = await remoteQuery(queryObject)
-  return products[0]
+  for (const priceRule of price.price_rules || []) {
+    const ruleAttribute = priceRule.rule_type?.rule_attribute
+
+    if (ruleAttribute) {
+      rules[ruleAttribute] = priceRule.value
+    }
+  }
+
+  return rules
 }
 
 export const refetchVariant = async (

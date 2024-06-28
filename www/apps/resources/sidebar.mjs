@@ -79,6 +79,10 @@ export const sidebar = sidebarAttachHrefCommonOptions([
         hasTitleStyling: true,
         children: [
           {
+            path: "/commerce-modules/auth/module-options",
+            title: "Module Options",
+          },
+          {
             path: "/commerce-modules/auth/examples",
             title: "Examples",
           },
@@ -86,16 +90,35 @@ export const sidebar = sidebarAttachHrefCommonOptions([
             title: "Concepts",
             children: [
               {
+                path: "/commerce-modules/auth/auth-identity-and-actor-types",
+                title: "Identity and Actor Types",
+              },
+              {
                 path: "/commerce-modules/auth/auth-providers",
                 title: "Auth Providers",
+                children: [
+                  {
+                    path: "/commerce-modules/auth/auth-providers/emailpass",
+                    title: "Emailpass Auth Provider Module",
+                  },
+                ],
+              },
+              {
+                path: "/commerce-modules/auth/authentication-route",
+                title: "Authentication Route",
               },
               {
                 path: "/commerce-modules/auth/auth-flows",
                 title: "Auth Flows",
               },
+            ],
+          },
+          {
+            title: "Guides",
+            children: [
               {
-                path: "/commerce-modules/auth/user-creation",
-                title: "User Creation",
+                path: "/commerce-modules/auth/create-actor-type",
+                title: "Create an Actor Type",
               },
             ],
           },
@@ -1247,6 +1270,61 @@ export const sidebar = sidebarAttachHrefCommonOptions([
       },
     ],
   },
+
+  {
+    title: "Recipes",
+    hasTitleStyling: true,
+    children: [
+      {
+        path: "/recipes/b2b",
+        title: "B2B",
+      },
+      {
+        path: "/recipes/commerce-automation",
+        title: "Commerce Automation",
+      },
+      {
+        path: "/recipes/digital-products",
+        title: "Digital Products",
+      },
+      {
+        path: "/recipes/ecommerce",
+        title: "Ecommerce",
+      },
+      {
+        path: "/recipes/integrate-ecommerce-stack",
+        title: "Integrate Ecommerce Stack",
+      },
+      {
+        path: "/recipes/marketplace",
+        title: "Marketplace",
+      },
+      {
+        path: "/recipes/multi-region-store",
+        title: "Multi-Region Store",
+      },
+      {
+        path: "/recipes/omnichannel",
+        title: "Omnichannel Store",
+      },
+      {
+        path: "/recipes/oms",
+        title: "OMS",
+      },
+      {
+        path: "/recipes/personalized-products",
+        title: "Personalized Products",
+      },
+      {
+        path: "/recipes/pos",
+        title: "POS",
+      },
+      {
+        path: "/recipes/subscriptions",
+        title: "Subscriptions",
+      },
+    ],
+  },
   {
     title: "SDKs and Tools",
     hasTitleStyling: true,
@@ -1643,7 +1721,7 @@ export const sidebar = sidebarAttachHrefCommonOptions([
             children: [
               {
                 path: "/references/file-provider-module",
-                title: "Create File Module",
+                title: "Create File Provider",
               },
             ],
           },
@@ -1671,7 +1749,7 @@ export const sidebar = sidebarAttachHrefCommonOptions([
               },
               {
                 path: "/references/notification-provider-module",
-                title: "Create Notification Module",
+                title: "Create Notification Provider",
               },
             ],
           },
@@ -1689,6 +1767,190 @@ export const sidebar = sidebarAttachHrefCommonOptions([
           {
             path: "/architectural-modules/workflow-engine/redis",
             title: "Redis",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: "/storefront-development",
+    title: "Storefront Development",
+    hasTitleStyling: true,
+    isChildSidebar: true,
+    children: [
+      {
+        path: "/storefront-development/tips",
+        title: "Tips",
+      },
+      {
+        path: "/storefront-development/regions",
+        title: "Regions",
+        children: [
+          {
+            path: "/storefront-development/regions/list",
+            title: "List Regions",
+          },
+          {
+            path: "/storefront-development/regions/store-retrieve-region",
+            title: "Store and Retrieve Regions",
+          },
+          {
+            path: "/storefront-development/regions/context",
+            title: "Region React Context",
+          },
+        ],
+      },
+      {
+        path: "/storefront-development/products",
+        title: "Products",
+        children: [
+          {
+            path: "/storefront-development/products/list",
+            title: "List Products",
+          },
+          {
+            path: "/storefront-development/products/retrieve",
+            title: "Retrieve a Product",
+          },
+          {
+            path: "/storefront-development/products/variants",
+            title: "Select a Variant",
+          },
+          {
+            path: "/storefront-development/products/price",
+            title: "Retrieve Variant Prices",
+          },
+          {
+            path: "/storefront-development/products/categories",
+            title: "Categories",
+            children: [
+              {
+                path: "/storefront-development/products/categories/list",
+                title: "List Categories",
+              },
+              {
+                path: "/storefront-development/products/categories/retrieve",
+                title: "Retrieve a Category",
+              },
+              {
+                path: "/storefront-development/products/categories/products",
+                title: "Retrieve a Category's Products",
+              },
+              {
+                path: "/storefront-development/products/categories/nested-categories",
+                title: "Retrieve Nested Categories",
+              },
+            ],
+          },
+          {
+            path: "/storefront-development/products/collections",
+            title: "Collections",
+            children: [
+              {
+                path: "/storefront-development/products/collections/list",
+                title: "List Collections",
+              },
+              {
+                path: "/storefront-development/products/collections/retrieve",
+                title: "Retrieve a Collection",
+              },
+              {
+                path: "/storefront-development/products/collections/products",
+                title: "Retrieve a Collection's Products",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: "/storefront-development/cart",
+        title: "Carts",
+        children: [
+          {
+            path: "/storefront-development/cart/create",
+            title: "Create Cart",
+          },
+          {
+            path: "/storefront-development/cart/retrieve",
+            title: "Retrieve Cart",
+          },
+          {
+            path: "/storefront-development/cart/context",
+            title: "Cart React Context",
+          },
+          {
+            path: "/storefront-development/cart/update",
+            title: "Update Cart",
+          },
+          {
+            path: "/storefront-development/cart/manage-items",
+            title: "Manage Line Items",
+          },
+        ],
+      },
+      {
+        path: "/storefront-development/checkout",
+        title: "Checkout",
+        children: [
+          {
+            path: "/storefront-development/checkout/email",
+            title: "1. Enter Email",
+          },
+          {
+            path: "/storefront-development/checkout/address",
+            title: "2. Enter Address",
+          },
+          {
+            path: "/storefront-development/checkout/shipping",
+            title: "3. Choose Shipping Method",
+          },
+          {
+            path: "/storefront-development/checkout/payment",
+            title: "4. Choose Payment Provider",
+            children: [
+              {
+                path: "/storefront-development/checkout/payment/stripe",
+                title: "Example: Stripe",
+              },
+            ],
+          },
+          {
+            path: "/storefront-development/checkout/complete-cart",
+            title: "5. Complete Cart",
+          },
+        ],
+      },
+      {
+        path: "/storefront-development/customers",
+        title: "Customers",
+        children: [
+          {
+            path: "/storefront-development/customers/register",
+            title: "Register Customer",
+          },
+          {
+            path: "/storefront-development/customers/login",
+            title: "Login Customer",
+          },
+          {
+            path: "/storefront-development/customers/retrieve",
+            title: "Retrieve Customer",
+          },
+          {
+            path: "/storefront-development/customers/context",
+            title: "Customer React Context",
+          },
+          {
+            path: "/storefront-development/customers/profile",
+            title: "Edit Customer Profile",
+          },
+          {
+            path: "/storefront-development/customers/addresses",
+            title: "Manage Customer Addresses",
+          },
+          {
+            path: "/storefront-development/customers/log-out",
+            title: "Log-out Customer",
           },
         ],
       },

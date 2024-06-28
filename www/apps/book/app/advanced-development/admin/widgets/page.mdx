@@ -75,12 +75,15 @@ Widgets that are injected into a details page (for example, `product.details.aft
 
 For example:
 
-```tsx title="src/admin/widgets/product-widget.tsx" highlights={[["5"]]}
+```tsx title="src/admin/widgets/product-widget.tsx" highlights={[["8"]]}
 import { defineWidgetConfig } from "@medusajs/admin-shared"
-import { DetailWidgetProps, AdminProduct } from "@medusajs/types"
+import { 
+  DetailWidgetProps, 
+  AdminProduct,
+} from "@medusajs/types"
 
 const ProductWidget = ({ 
-  data
+  data,
 }: DetailWidgetProps<AdminProduct>) => {
   return (
     <div>

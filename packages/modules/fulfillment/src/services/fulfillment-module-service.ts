@@ -14,18 +14,18 @@ import {
   UpdateServiceZoneDTO,
 } from "@medusajs/types"
 import {
-  EmitEvents,
-  InjectManager,
-  InjectTransactionManager,
-  MedusaContext,
-  MedusaError,
-  ModulesSdkUtils,
   arrayDifference,
   deepEqualObj,
+  EmitEvents,
   getSetDifference,
+  InjectManager,
+  InjectTransactionManager,
   isDefined,
   isPresent,
   isString,
+  MedusaContext,
+  MedusaError,
+  ModulesSdkUtils,
   promiseAll,
 } from "@medusajs/utils"
 import {
@@ -52,7 +52,8 @@ import { UpdateShippingOptionsInput } from "../types/service"
 import { buildCreatedShippingOptionEvents } from "../utils/events"
 import FulfillmentProviderService from "./fulfillment-provider"
 
-const generateMethodForModels = [
+const generateMethodForModels = {
+  FulfillmentSet,
   ServiceZone,
   ShippingOption,
   GeoZone,
@@ -61,57 +62,44 @@ const generateMethodForModels = [
   ShippingOptionType,
   FulfillmentProvider,
   // Not adding Fulfillment to not auto generate the methods under the hood and only provide the methods we want to expose8
-]
+}
 
 type InjectedDependencies = {
   baseRepository: DAL.RepositoryService
-  fulfillmentSetService: ModulesSdkTypes.InternalModuleService<any>
-  serviceZoneService: ModulesSdkTypes.InternalModuleService<any>
-  geoZoneService: ModulesSdkTypes.InternalModuleService<any>
-  shippingProfileService: ModulesSdkTypes.InternalModuleService<any>
-  shippingOptionService: ModulesSdkTypes.InternalModuleService<any>
-  shippingOptionRuleService: ModulesSdkTypes.InternalModuleService<any>
-  shippingOptionTypeService: ModulesSdkTypes.InternalModuleService<any>
+  fulfillmentSetService: ModulesSdkTypes.IMedusaInternalService<any>
+  serviceZoneService: ModulesSdkTypes.IMedusaInternalService<any>
+  geoZoneService: ModulesSdkTypes.IMedusaInternalService<any>
+  shippingProfileService: ModulesSdkTypes.IMedusaInternalService<any>
+  shippingOptionService: ModulesSdkTypes.IMedusaInternalService<any>
+  shippingOptionRuleService: ModulesSdkTypes.IMedusaInternalService<any>
+  shippingOptionTypeService: ModulesSdkTypes.IMedusaInternalService<any>
   fulfillmentProviderService: FulfillmentProviderService
-  fulfillmentService: ModulesSdkTypes.InternalModuleService<any>
+  fulfillmentService: ModulesSdkTypes.IMedusaInternalService<any>
 }
 
-export default class FulfillmentModuleService<
-    TEntity extends FulfillmentSet = FulfillmentSet,
-    TServiceZoneEntity extends ServiceZone = ServiceZone,
-    TGeoZoneEntity extends GeoZone = GeoZone,
-    TShippingProfileEntity extends ShippingProfile = ShippingProfile,
-    TShippingOptionEntity extends ShippingOption = ShippingOption,
-    TShippingOptionRuleEntity extends ShippingOptionRule = ShippingOptionRule,
-    TSippingOptionTypeEntity extends ShippingOptionType = ShippingOptionType,
-    TFulfillmentEntity extends Fulfillment = Fulfillment
-  >
-  extends ModulesSdkUtils.abstractModuleServiceFactory<
-    InjectedDependencies,
-    FulfillmentTypes.FulfillmentSetDTO,
-    {
-      FulfillmentSet: { dto: FulfillmentTypes.FulfillmentSetDTO }
-      ServiceZone: { dto: FulfillmentTypes.ServiceZoneDTO }
-      ShippingOption: { dto: FulfillmentTypes.ShippingOptionDTO }
-      GeoZone: { dto: FulfillmentTypes.GeoZoneDTO }
-      ShippingProfile: { dto: FulfillmentTypes.ShippingProfileDTO }
-      ShippingOptionRule: { dto: FulfillmentTypes.ShippingOptionRuleDTO }
-      ShippingOptionType: { dto: FulfillmentTypes.ShippingOptionTypeDTO }
-      FulfillmentProvider: { dto: FulfillmentTypes.FulfillmentProviderDTO }
-    }
-  >(FulfillmentSet, generateMethodForModels, entityNameToLinkableKeysMap)
+export default class FulfillmentModuleService
+  extends ModulesSdkUtils.MedusaService<{
+    FulfillmentSet: { dto: FulfillmentTypes.FulfillmentSetDTO }
+    ServiceZone: { dto: FulfillmentTypes.ServiceZoneDTO }
+    ShippingOption: { dto: FulfillmentTypes.ShippingOptionDTO }
+    GeoZone: { dto: FulfillmentTypes.GeoZoneDTO }
+    ShippingProfile: { dto: FulfillmentTypes.ShippingProfileDTO }
+    ShippingOptionRule: { dto: FulfillmentTypes.ShippingOptionRuleDTO }
+    ShippingOptionType: { dto: FulfillmentTypes.ShippingOptionTypeDTO }
+    FulfillmentProvider: { dto: FulfillmentTypes.FulfillmentProviderDTO }
+  }>(generateMethodForModels, entityNameToLinkableKeysMap)
   implements IFulfillmentModuleService
 {
   protected baseRepository_: DAL.RepositoryService
-  protected readonly fulfillmentSetService_: ModulesSdkTypes.InternalModuleService<TEntity>
-  protected readonly serviceZoneService_: ModulesSdkTypes.InternalModuleService<TServiceZoneEntity>
-  protected readonly geoZoneService_: ModulesSdkTypes.InternalModuleService<TGeoZoneEntity>
-  protected readonly shippingProfileService_: ModulesSdkTypes.InternalModuleService<TShippingProfileEntity>
-  protected readonly shippingOptionService_: ModulesSdkTypes.InternalModuleService<TShippingOptionEntity>
-  protected readonly shippingOptionRuleService_: ModulesSdkTypes.InternalModuleService<TShippingOptionRuleEntity>
-  protected readonly shippingOptionTypeService_: ModulesSdkTypes.InternalModuleService<TSippingOptionTypeEntity>
+  protected readonly fulfillmentSetService_: ModulesSdkTypes.IMedusaInternalService<FulfillmentSet>
+  protected readonly serviceZoneService_: ModulesSdkTypes.IMedusaInternalService<ServiceZone>
+  protected readonly geoZoneService_: ModulesSdkTypes.IMedusaInternalService<GeoZone>
+  protected readonly shippingProfileService_: ModulesSdkTypes.IMedusaInternalService<ShippingProfile>
+  protected readonly shippingOptionService_: ModulesSdkTypes.IMedusaInternalService<ShippingOption>
+  protected readonly shippingOptionRuleService_: ModulesSdkTypes.IMedusaInternalService<ShippingOptionRule>
+  protected readonly shippingOptionTypeService_: ModulesSdkTypes.IMedusaInternalService<ShippingOptionType>
   protected readonly fulfillmentProviderService_: FulfillmentProviderService
-  protected readonly fulfillmentService_: ModulesSdkTypes.InternalModuleService<TFulfillmentEntity>
+  protected readonly fulfillmentService_: ModulesSdkTypes.IMedusaInternalService<Fulfillment>
 
   constructor(
     {
@@ -259,18 +247,19 @@ export default class FulfillmentModuleService<
     ]
   }
 
-  create(
+  // @ts-expect-error
+  createFulfillmentSets(
     data: FulfillmentTypes.CreateFulfillmentSetDTO[],
     sharedContext?: Context
   ): Promise<FulfillmentTypes.FulfillmentSetDTO[]>
-  create(
+  createFulfillmentSets(
     data: FulfillmentTypes.CreateFulfillmentSetDTO,
     sharedContext?: Context
   ): Promise<FulfillmentTypes.FulfillmentSetDTO>
 
   @InjectManager("baseRepository_")
   @EmitEvents()
-  async create(
+  async createFulfillmentSets(
     data:
       | FulfillmentTypes.CreateFulfillmentSetDTO
       | FulfillmentTypes.CreateFulfillmentSetDTO[],
@@ -278,7 +267,10 @@ export default class FulfillmentModuleService<
   ): Promise<
     FulfillmentTypes.FulfillmentSetDTO | FulfillmentTypes.FulfillmentSetDTO[]
   > {
-    const createdFulfillmentSets = await this.create_(data, sharedContext)
+    const createdFulfillmentSets = await this.createFulfillmentSets_(
+      data,
+      sharedContext
+    )
 
     const returnedFulfillmentSets = Array.isArray(data)
       ? createdFulfillmentSets
@@ -290,12 +282,12 @@ export default class FulfillmentModuleService<
   }
 
   @InjectTransactionManager("baseRepository_")
-  protected async create_(
+  protected async createFulfillmentSets_(
     data:
       | FulfillmentTypes.CreateFulfillmentSetDTO
       | FulfillmentTypes.CreateFulfillmentSetDTO[],
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TEntity[]> {
+  ): Promise<FulfillmentSet[]> {
     const data_ = Array.isArray(data) ? data : [data]
 
     if (!data_.length) {
@@ -325,6 +317,7 @@ export default class FulfillmentModuleService<
     return createdFulfillmentSets
   }
 
+  // @ts-ignore
   createServiceZones(
     data: FulfillmentTypes.CreateServiceZoneDTO[],
     sharedContext?: Context
@@ -360,7 +353,7 @@ export default class FulfillmentModuleService<
       | FulfillmentTypes.CreateServiceZoneDTO[]
       | FulfillmentTypes.CreateServiceZoneDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TServiceZoneEntity[]> {
+  ): Promise<ServiceZone[]> {
     const data_ = Array.isArray(data) ? data : [data]
 
     if (!data_.length) {
@@ -388,6 +381,7 @@ export default class FulfillmentModuleService<
     return createdServiceZones
   }
 
+  // @ts-ignore
   createShippingOptions(
     data: FulfillmentTypes.CreateShippingOptionDTO[],
     sharedContext?: Context
@@ -423,7 +417,7 @@ export default class FulfillmentModuleService<
       | FulfillmentTypes.CreateShippingOptionDTO[]
       | FulfillmentTypes.CreateShippingOptionDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TShippingOptionEntity[]> {
+  ): Promise<ShippingOption[]> {
     const data_ = Array.isArray(data) ? data : [data]
 
     if (!data_.length) {
@@ -448,6 +442,7 @@ export default class FulfillmentModuleService<
     return createdSO
   }
 
+  // @ts-ignore
   createShippingProfiles(
     data: FulfillmentTypes.CreateShippingProfileDTO[],
     sharedContext?: Context
@@ -491,7 +486,7 @@ export default class FulfillmentModuleService<
       | FulfillmentTypes.CreateShippingProfileDTO[]
       | FulfillmentTypes.CreateShippingProfileDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TShippingProfileEntity[]> {
+  ): Promise<ShippingProfile[]> {
     const data_ = Array.isArray(data) ? data : [data]
 
     if (!data_.length) {
@@ -501,6 +496,7 @@ export default class FulfillmentModuleService<
     return await this.shippingProfileService_.create(data_, sharedContext)
   }
 
+  // @ts-ignore
   createGeoZones(
     data: FulfillmentTypes.CreateGeoZoneDTO[],
     sharedContext?: Context
@@ -537,6 +533,7 @@ export default class FulfillmentModuleService<
     )
   }
 
+  // @ts-ignore
   async createShippingOptionRules(
     data: FulfillmentTypes.CreateShippingOptionRuleDTO[],
     sharedContext?: Context
@@ -578,7 +575,7 @@ export default class FulfillmentModuleService<
       | FulfillmentTypes.CreateShippingOptionRuleDTO[]
       | FulfillmentTypes.CreateShippingOptionRuleDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TShippingOptionRuleEntity[]> {
+  ): Promise<ShippingOptionRule[]> {
     const data_ = Array.isArray(data) ? data : [data]
 
     if (!data_.length) {
@@ -694,24 +691,28 @@ export default class FulfillmentModuleService<
     )
   }
 
-  update(
+  // @ts-expect-error
+  updateFulfillmentSets(
     data: FulfillmentTypes.UpdateFulfillmentSetDTO[],
     sharedContext?: Context
   ): Promise<FulfillmentTypes.FulfillmentSetDTO[]>
-  update(
+  updateFulfillmentSets(
     data: FulfillmentTypes.UpdateFulfillmentSetDTO,
     sharedContext?: Context
   ): Promise<FulfillmentTypes.FulfillmentSetDTO>
 
   @InjectManager("baseRepository_")
   @EmitEvents()
-  async update(
+  async updateFulfillmentSets(
     data: UpdateFulfillmentSetDTO[] | UpdateFulfillmentSetDTO,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<
     FulfillmentTypes.FulfillmentSetDTO[] | FulfillmentTypes.FulfillmentSetDTO
   > {
-    const updatedFulfillmentSets = await this.update_(data, sharedContext)
+    const updatedFulfillmentSets = await this.updateFulfillmentSets_(
+      data,
+      sharedContext
+    )
 
     return await this.baseRepository_.serialize<
       FulfillmentTypes.FulfillmentSetDTO | FulfillmentTypes.FulfillmentSetDTO[]
@@ -719,10 +720,10 @@ export default class FulfillmentModuleService<
   }
 
   @InjectTransactionManager("baseRepository_")
-  protected async update_(
+  protected async updateFulfillmentSets_(
     data: UpdateFulfillmentSetDTO[] | UpdateFulfillmentSetDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TEntity[] | TEntity> {
+  ): Promise<FulfillmentSet[] | FulfillmentSet> {
     const data_ = Array.isArray(data) ? data : [data]
 
     if (!data_.length) {
@@ -761,7 +762,7 @@ export default class FulfillmentModuleService<
       )
     }
 
-    const fulfillmentSetMap = new Map<string, TEntity>(
+    const fulfillmentSetMap = new Map<string, FulfillmentSet>(
       fulfillmentSets.map((f) => [f.id, f])
     )
 
@@ -924,6 +925,7 @@ export default class FulfillmentModuleService<
       : updatedFulfillmentSets[0]
   }
 
+  // @ts-ignore
   updateServiceZones(
     id: string,
     data: FulfillmentTypes.UpdateServiceZoneDTO,
@@ -984,7 +986,7 @@ export default class FulfillmentModuleService<
       | FulfillmentTypes.UpdateServiceZoneDTO[]
       | FulfillmentTypes.UpdateServiceZoneDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TServiceZoneEntity | TServiceZoneEntity[]> {
+  ): Promise<ServiceZone | ServiceZone[]> {
     const data_ = Array.isArray(data) ? data : [data]
 
     if (!data_.length) {
@@ -1023,7 +1025,7 @@ export default class FulfillmentModuleService<
       )
     }
 
-    const serviceZoneMap = new Map<string, TServiceZoneEntity>(
+    const serviceZoneMap = new Map<string, ServiceZone>(
       serviceZones.map((s) => [s.id, s])
     )
 
@@ -1180,7 +1182,7 @@ export default class FulfillmentModuleService<
       | FulfillmentTypes.UpsertServiceZoneDTO[]
       | FulfillmentTypes.UpsertServiceZoneDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TServiceZoneEntity[] | TServiceZoneEntity> {
+  ): Promise<ServiceZone[] | ServiceZone> {
     const input = Array.isArray(data) ? data : [data]
     const forUpdate = input.filter(
       (serviceZone): serviceZone is FulfillmentTypes.UpdateServiceZoneDTO =>
@@ -1191,8 +1193,8 @@ export default class FulfillmentModuleService<
         !serviceZone.id
     )
 
-    const created: TServiceZoneEntity[] = []
-    const updated: TServiceZoneEntity[] = []
+    const created: ServiceZone[] = []
+    const updated: ServiceZone[] = []
 
     if (forCreate.length) {
       const createdServiceZones = await this.createServiceZones_(
@@ -1223,6 +1225,7 @@ export default class FulfillmentModuleService<
     return [...created, ...updated]
   }
 
+  // @ts-ignore
   updateShippingOptions(
     id: string,
     data: FulfillmentTypes.UpdateShippingOptionDTO,
@@ -1274,7 +1277,7 @@ export default class FulfillmentModuleService<
   async updateShippingOptions_(
     data: UpdateShippingOptionsInput[] | UpdateShippingOptionsInput,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TShippingOptionEntity | TShippingOptionEntity[]> {
+  ): Promise<ShippingOption | ShippingOption[]> {
     const dataArray = Array.isArray(data) ? data : [data]
 
     if (!dataArray.length) {
@@ -1500,7 +1503,7 @@ export default class FulfillmentModuleService<
       | FulfillmentTypes.UpsertShippingOptionDTO[]
       | FulfillmentTypes.UpsertShippingOptionDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TShippingOptionEntity[] | TShippingOptionEntity> {
+  ): Promise<ShippingOption[] | ShippingOption> {
     const input = Array.isArray(data) ? data : [data]
     const forUpdate = input.filter(
       (shippingOption): shippingOption is UpdateShippingOptionsInput =>
@@ -1513,8 +1516,8 @@ export default class FulfillmentModuleService<
         !shippingOption.id
     )
 
-    let created: TShippingOptionEntity[] = []
-    let updated: TShippingOptionEntity[] = []
+    let created: ShippingOption[] = []
+    let updated: ShippingOption[] = []
 
     if (forCreate.length) {
       const createdShippingOptions = await this.createShippingOptions_(
@@ -1540,6 +1543,7 @@ export default class FulfillmentModuleService<
     return [...created, ...updated]
   }
 
+  // @ts-ignore
   updateShippingProfiles(
     selector: FulfillmentTypes.FilterableShippingProfileProps,
     data: FulfillmentTypes.UpdateShippingProfileDTO,
@@ -1643,6 +1647,7 @@ export default class FulfillmentModuleService<
     return Array.isArray(data) ? allProfiles : allProfiles[0]
   }
 
+  // @ts-ignore
   updateGeoZones(
     data: FulfillmentTypes.UpdateGeoZoneDTO[],
     sharedContext?: Context
@@ -1685,6 +1690,7 @@ export default class FulfillmentModuleService<
     return Array.isArray(data) ? serialized : serialized[0]
   }
 
+  // @ts-ignore
   updateShippingOptionRules(
     data: FulfillmentTypes.UpdateShippingOptionRuleDTO[],
     sharedContext?: Context
@@ -1722,7 +1728,7 @@ export default class FulfillmentModuleService<
       | FulfillmentTypes.UpdateShippingOptionRuleDTO[]
       | FulfillmentTypes.UpdateShippingOptionRuleDTO,
     @MedusaContext() sharedContext: Context = {}
-  ): Promise<TShippingOptionRuleEntity | TShippingOptionRuleEntity[]> {
+  ): Promise<ShippingOptionRule | ShippingOptionRule[]> {
     const data_ = Array.isArray(data) ? data : [data]
 
     if (!data_.length) {
@@ -1763,8 +1769,8 @@ export default class FulfillmentModuleService<
     id: string,
     data: FulfillmentTypes.UpdateFulfillmentDTO,
     @MedusaContext() sharedContext: Context
-  ): Promise<TFulfillmentEntity> {
-    const existingFulfillment: TFulfillmentEntity =
+  ): Promise<Fulfillment> {
+    const existingFulfillment: Fulfillment =
       await this.fulfillmentService_.retrieve(
         id,
         {

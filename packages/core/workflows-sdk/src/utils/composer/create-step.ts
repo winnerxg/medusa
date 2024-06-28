@@ -4,9 +4,9 @@ import {
   WorkflowStepHandler,
   WorkflowStepHandlerArguments,
 } from "@medusajs/orchestration"
-import { OrchestrationUtils, deepCopy, isString } from "@medusajs/utils"
+import { deepCopy, isString, OrchestrationUtils } from "@medusajs/utils"
 import { ulid } from "ulid"
-import { StepResponse, resolveValue } from "./helpers"
+import { resolveValue, StepResponse } from "./helpers"
 import { proxify } from "./helpers/proxy"
 import {
   CreateWorkflowComposerContext,
@@ -135,6 +135,10 @@ function applyStep<
           attempt: metadata.attempt,
           container: stepArguments.container,
           metadata,
+          eventGroupId:
+            stepArguments.transaction.getFlow()?.metadata?.eventGroupId ??
+            stepArguments.context!.eventGroupId,
+          transactionId: stepArguments.context!.transactionId,
           context: stepArguments.context!,
         }
 
@@ -317,7 +321,7 @@ function wrapAsyncHandler(
  *     const productService = context.container.resolve(
  *       "productService"
  *     )
- *     const product = await productService.create(input)
+ *     const product = await productService.createProducts(input)
  *     return new StepResponse({
  *       product
  *     }, {
@@ -331,7 +335,7 @@ function wrapAsyncHandler(
  *     const productService = context.container.resolve(
  *       "productService"
  *     )
- *     await productService.delete(input.product_id)
+ *     await productService.deleteProducts(input.product_id)
  *   }
  * )
  */

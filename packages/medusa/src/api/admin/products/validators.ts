@@ -71,7 +71,7 @@ export const AdminGetProductOptionsParams = createFindParams({
 
 export type AdminCreateProductTagType = z.infer<typeof AdminCreateProductTag>
 export const AdminCreateProductTag = z.object({
-  value: z.string().optional(),
+  value: z.string(),
 })
 
 export type AdminUpdateProductTagType = z.infer<typeof AdminUpdateProductTag>
@@ -97,18 +97,17 @@ export const AdminUpdateProductOption = z.object({
   values: z.array(z.string()).optional(),
 })
 
-// TODO: Add support for rules
 export type AdminCreateVariantPriceType = z.infer<
   typeof AdminCreateVariantPrice
 >
 export const AdminCreateVariantPrice = z.object({
   currency_code: z.string(),
   amount: z.number(),
-  min_quantity: z.number().optional(),
-  max_quantity: z.number().optional(),
+  min_quantity: z.number().nullish(),
+  max_quantity: z.number().nullish(),
+  rules: z.record(z.string(), z.string()).optional(),
 })
 
-// TODO: Add support for rules
 export type AdminUpdateVariantPriceType = z.infer<
   typeof AdminUpdateVariantPrice
 >
@@ -116,8 +115,9 @@ export const AdminUpdateVariantPrice = z.object({
   id: z.string().optional(),
   currency_code: z.string().optional(),
   amount: z.number().optional(),
-  min_quantity: z.number().optional(),
-  max_quantity: z.number().optional(),
+  min_quantity: z.number().nullish(),
+  max_quantity: z.number().nullish(),
+  rules: z.record(z.string(), z.string()).optional(),
 })
 
 export type AdminCreateProductTypeType = z.infer<typeof AdminCreateProductType>
@@ -131,22 +131,22 @@ export type AdminCreateProductVariantType = z.infer<
 export const AdminCreateProductVariant = z
   .object({
     title: z.string(),
-    sku: z.string().nullable().optional(),
-    ean: z.string().nullable().optional(),
-    upc: z.string().nullable().optional(),
-    barcode: z.string().nullable().optional(),
-    hs_code: z.string().nullable().optional(),
-    mid_code: z.string().nullable().optional(),
+    sku: z.string().nullish(),
+    ean: z.string().nullish(),
+    upc: z.string().nullish(),
+    barcode: z.string().nullish(),
+    hs_code: z.string().nullish(),
+    mid_code: z.string().nullish(),
     allow_backorder: z.boolean().optional().default(false),
     manage_inventory: z.boolean().optional().default(true),
     variant_rank: z.number().optional(),
-    weight: z.number().nullable().optional(),
-    length: z.number().nullable().optional(),
-    height: z.number().nullable().optional(),
-    width: z.number().nullable().optional(),
-    origin_country: z.string().nullable().optional(),
-    material: z.string().nullable().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    weight: z.number().nullish(),
+    length: z.number().nullish(),
+    height: z.number().nullish(),
+    width: z.number().nullish(),
+    origin_country: z.string().nullish(),
+    material: z.string().nullish(),
+    metadata: z.record(z.unknown()).nullish(),
     prices: z.array(AdminCreateVariantPrice),
     options: z.record(z.string()).optional(),
     inventory_items: z
@@ -163,13 +163,30 @@ export const AdminCreateProductVariant = z
 export type AdminUpdateProductVariantType = z.infer<
   typeof AdminUpdateProductVariant
 >
-export const AdminUpdateProductVariant = AdminCreateProductVariant.extend({
-  id: z.string().optional(),
-  title: z.string().optional(),
-  prices: z.array(AdminUpdateVariantPrice).optional(),
-  allow_backorder: z.boolean().optional(),
-  manage_inventory: z.boolean().optional(),
-}).strict()
+export const AdminUpdateProductVariant = z
+  .object({
+    id: z.string().optional(),
+    title: z.string().optional(),
+    prices: z.array(AdminUpdateVariantPrice).optional(),
+    sku: z.string().nullish(),
+    ean: z.string().nullish(),
+    upc: z.string().nullish(),
+    barcode: z.string().nullish(),
+    hs_code: z.string().nullish(),
+    mid_code: z.string().nullish(),
+    allow_backorder: z.boolean().optional(),
+    manage_inventory: z.boolean().optional(),
+    variant_rank: z.number().optional(),
+    weight: z.number().nullish(),
+    length: z.number().nullish(),
+    height: z.number().nullish(),
+    width: z.number().nullish(),
+    origin_country: z.string().nullish(),
+    material: z.string().nullish(),
+    metadata: z.record(z.unknown()).nullish(),
+    options: z.record(z.string()).optional(),
+  })
+  .strict()
 
 export type AdminBatchUpdateProductVariantType = z.infer<
   typeof AdminBatchUpdateProductVariant
@@ -186,50 +203,61 @@ export type AdminCreateProductType = z.infer<typeof AdminCreateProduct>
 export const AdminCreateProduct = z
   .object({
     title: z.string(),
-    subtitle: z.string().nullable().optional(),
-    description: z.string().nullable().optional(),
+    subtitle: z.string().nullish(),
+    description: z.string().nullish(),
     is_giftcard: z.boolean().optional().default(false),
     discountable: z.boolean().optional().default(true),
-    images: z
-      .array(z.object({ url: z.string() }))
-      .nullable()
-      .optional(),
-    thumbnail: z.string().nullable().optional(),
+    images: z.array(z.object({ url: z.string() })).optional(),
+    thumbnail: z.string().nullish(),
     handle: z.string().optional(),
-    status: statusEnum.optional().default(ProductStatus.DRAFT),
-    type_id: z.string().nullable().optional(),
-    collection_id: z.string().nullable().optional(),
-    categories: z
-      .array(AdminCreateProductProductCategory)
-      .nullable()
-      .optional(),
-    tags: z.array(AdminUpdateProductTag).nullable().optional(),
+    status: statusEnum.nullish().default(ProductStatus.DRAFT),
+    type_id: z.string().nullish(),
+    collection_id: z.string().nullish(),
+    categories: z.array(AdminCreateProductProductCategory).optional(),
+    tags: z.array(AdminUpdateProductTag).optional(),
     options: z.array(AdminCreateProductOption).optional(),
     variants: z.array(AdminCreateProductVariant).optional(),
-    sales_channels: z
-      .array(z.object({ id: z.string() }))
-      .nullable()
-      .optional(),
-    weight: z.number().nullable().optional(),
-    length: z.number().nullable().optional(),
-    height: z.number().nullable().optional(),
-    width: z.number().nullable().optional(),
-    hs_code: z.string().nullable().optional(),
-    mid_code: z.string().nullable().optional(),
-    origin_country: z.string().nullable().optional(),
-    material: z.string().nullable().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    sales_channels: z.array(z.object({ id: z.string() })).optional(),
+    weight: z.number().nullish(),
+    length: z.number().nullish(),
+    height: z.number().nullish(),
+    width: z.number().nullish(),
+    hs_code: z.string().nullish(),
+    mid_code: z.string().nullish(),
+    origin_country: z.string().nullish(),
+    material: z.string().nullish(),
+    metadata: z.record(z.unknown()).nullish(),
   })
   .strict()
 
 export type AdminUpdateProductType = z.infer<typeof AdminUpdateProduct>
-export const AdminUpdateProduct = AdminCreateProduct.omit({ is_giftcard: true })
-  .extend({
+export const AdminUpdateProduct = z
+  .object({
     title: z.string().optional(),
     discountable: z.boolean().optional(),
+    is_giftcard: z.boolean().optional(),
     options: z.array(AdminUpdateProductOption).optional(),
     variants: z.array(AdminUpdateProductVariant).optional(),
     status: statusEnum.optional(),
+    subtitle: z.string().nullish(),
+    description: z.string().nullish(),
+    images: z.array(z.object({ url: z.string() })).optional(),
+    thumbnail: z.string().nullish(),
+    handle: z.string().nullish(),
+    type_id: z.string().nullish(),
+    collection_id: z.string().nullish(),
+    categories: z.array(AdminCreateProductProductCategory).optional(),
+    tags: z.array(AdminUpdateProductTag).optional(),
+    sales_channels: z.array(z.object({ id: z.string() })).optional(),
+    weight: z.number().nullish(),
+    length: z.number().nullish(),
+    height: z.number().nullish(),
+    width: z.number().nullish(),
+    hs_code: z.string().nullish(),
+    mid_code: z.string().nullish(),
+    origin_country: z.string().nullish(),
+    material: z.string().nullish(),
+    metadata: z.record(z.unknown()).nullish(),
   })
   .strict()
 

@@ -29,10 +29,10 @@ export const CreatePromotionSchema = z
     application_method: z.object({
       allocation: z.enum(["each", "across"]),
       value: z.number().min(0),
-      currency_code: z.string(),
+      currency_code: z.string().optional(),
       max_quantity: z.number().optional().nullable(),
       target_rules: RuleSchema,
-      buy_rules: RuleSchema.min(2).optional(),
+      buy_rules: RuleSchema,
       type: z.enum(["fixed", "percentage"]),
       target_type: z.enum(["order", "shipping_methods", "items"]),
     }),
@@ -54,3 +54,5 @@ export const CreatePromotionSchema = z
       message: `required field`,
     }
   )
+
+export type CreatePromotionSchemaType = z.infer<typeof CreatePromotionSchema>

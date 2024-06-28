@@ -1,10 +1,10 @@
 import { z } from "zod"
+import { OptionalBooleanValidator } from "../../utils/common-validators"
 import {
   createFindParams,
   createOperatorMap,
   createSelectParams,
 } from "../../utils/validators"
-import { OptionalBooleanValidator } from "../../utils/common-validators"
 
 export type AdminProductCategoryParamsType = z.infer<
   typeof AdminProductCategoryParams
@@ -48,8 +48,8 @@ export const AdminCreateProductCategory = z
     handle: z.string().optional(),
     is_internal: z.boolean().optional(),
     is_active: z.boolean().optional(),
-    parent_category_id: z.string().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    parent_category_id: z.string().nullish(),
+    metadata: z.record(z.unknown()).nullish(),
     rank: z.number().nonnegative().optional(),
   })
   .strict()
@@ -65,8 +65,8 @@ export const AdminUpdateProductCategory = z
     handle: z.string().optional(),
     is_internal: z.boolean().optional(),
     is_active: z.boolean().optional(),
-    parent_category_id: z.string().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    parent_category_id: z.string().nullish(),
+    metadata: z.record(z.unknown()).nullish(),
     rank: z.number().nonnegative().optional(),
   })
   .strict()

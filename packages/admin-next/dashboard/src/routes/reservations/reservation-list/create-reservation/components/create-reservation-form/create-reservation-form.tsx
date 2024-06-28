@@ -7,7 +7,7 @@ import {
 } from "../../../../../../components/route-modal"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { InventoryNext } from "@medusajs/types"
+import { InventoryTypes } from "@medusajs/types"
 import React from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -44,7 +44,7 @@ const AttributeGridRow = ({
   )
 }
 
-export const CreateReservationForm = () => {
+export const CreateReservationForm = (props: { inventoryItemId?: string }) => {
   const { t } = useTranslation()
   const { handleSuccess } = useRouteModal()
   const [inventorySearch, setInventorySearch] = React.useState<string | null>(
@@ -53,7 +53,7 @@ export const CreateReservationForm = () => {
 
   const form = useForm<zod.infer<typeof CreateReservationSchema>>({
     defaultValues: {
-      inventory_item_id: "",
+      inventory_item_id: props.inventoryItemId || "",
       location_id: "",
       quantity: 0,
       description: "",
@@ -81,7 +81,7 @@ export const CreateReservationForm = () => {
     {
       id:
         selectedInventoryItem?.location_levels?.map(
-          (level: InventoryNext.InventoryLevelDTO) => level.location_id
+          (level: InventoryTypes.InventoryLevelDTO) => level.location_id
         ) ?? [],
     },
     {
@@ -98,7 +98,11 @@ export const CreateReservationForm = () => {
           dismissLabel: t("actions.close"),
           description: t("inventory.reservation.successToast"),
         })
-        handleSuccess(`/reservations/${reservation.id}`)
+        handleSuccess(
+          props.inventoryItemId
+            ? `/inventory/${props.inventoryItemId}`
+            : `/reservations/${reservation.id}`
+        )
       },
     })
   })
@@ -147,6 +151,7 @@ export const CreateReservationForm = () => {
                             onChange(v)
                           }}
                           {...field}
+                          disabled={!!props.inventoryItemId}
                           options={(inventory_items ?? []).map(
                             (inventoryItem) => ({
                               label: inventoryItem.title ?? inventoryItem.sku!,

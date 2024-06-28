@@ -1,7 +1,6 @@
-import { PriceListDTO, ProductVariantDTO } from "@medusajs/types"
+import { HttpTypes, PriceListDTO } from "@medusajs/types"
 import { TFunction } from "i18next"
-import { ExtendedProductDTO } from "../../../types/api-responses"
-import { PriceListStatus } from "./constants"
+import { PriceListDateStatus, PriceListStatus } from "./constants"
 
 const getValues = (priceList: PriceListDTO) => {
   const startsAt = priceList.starts_at
@@ -26,30 +25,35 @@ export const getPriceListStatus = (
 
   let text = t("pricing.status.active")
   let color: "red" | "grey" | "orange" | "green" = "green"
-
-  if (isScheduled) {
-    color = "orange"
-    text = t("pricing.status.scheduled")
-  }
+  let status: string = PriceListStatus.ACTIVE
 
   if (isDraft) {
     color = "grey"
     text = t("pricing.status.draft")
+    status = PriceListStatus.DRAFT
   }
 
   if (isExpired) {
     color = "red"
     text = t("pricing.status.expired")
+    status = PriceListDateStatus.EXPIRED
+  }
+
+  if (isScheduled) {
+    color = "orange"
+    text = t("pricing.status.scheduled")
+    status = PriceListDateStatus.SCHEDULED
   }
 
   return {
     color,
     text,
+    status,
   }
 }
 
 export const isProductRow = (
-  row: ExtendedProductDTO | ProductVariantDTO
-): row is ExtendedProductDTO => {
+  row: HttpTypes.AdminProduct | HttpTypes.AdminProductVariant
+): row is HttpTypes.AdminProduct => {
   return "variants" in row
 }

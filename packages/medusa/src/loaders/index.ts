@@ -1,10 +1,12 @@
 import { createDefaultsWorkflow } from "@medusajs/core-flows"
 import { ConfigModule, MedusaContainer, PluginDetails } from "@medusajs/types"
-import { ContainerRegistrationKeys, promiseAll } from "@medusajs/utils"
+import {
+  ContainerRegistrationKeys,
+  createMedusaContainer,
+  promiseAll,
+} from "@medusajs/utils"
 import { asValue } from "awilix"
 import { Express, NextFunction, Request, Response } from "express"
-import glob from "glob"
-import { createMedusaContainer } from "@medusajs/utils"
 import path from "path"
 import requestIp from "request-ip"
 import { v4 } from "uuid"
@@ -13,13 +15,14 @@ import apiLoader from "./api"
 import loadConfig from "./config"
 import expressLoader from "./express"
 import featureFlagsLoader from "./feature-flags"
+import { registerJobs } from "./helpers/register-jobs"
 import { registerWorkflows } from "./helpers/register-workflows"
 import { getResolvedPlugins } from "./helpers/resolve-plugins"
+import { resolvePluginsLinks } from "./helpers/resolve-plugins-links"
 import { SubscriberLoader } from "./helpers/subscribers"
 import Logger from "./logger"
 import loadMedusaApp from "./medusa-app"
 import registerPgConnection from "./pg-connection"
-import { resolvePluginsLinks } from "./helpers/resolve-plugins-links"
 
 type Options = {
   directory: string
@@ -28,6 +31,13 @@ type Options = {
 
 const isWorkerMode = (configModule) => {
   return configModule.projectConfig.workerMode === "worker"
+}
+
+const shouldLoadBackgroundProcessors = (configModule) => {
+  return (
+    configModule.projectConfig.workerMode === "worker" ||
+    configModule.projectConfig.workerMode === "shared"
+  )
 }
 
 async function subscribersLoader(
@@ -47,19 +57,20 @@ async function subscribersLoader(
    */
   await Promise.all(
     plugins.map(async (pluginDetails) => {
-      const files = glob.sync(
-        `${pluginDetails.resolve}/subscribers/*.{ts,js,mjs,mts}`,
-        {
-          ignore: ["**/*.d.ts", "**/*.map"],
-        }
-      )
-      return await Promise.all(
-        files.map(
-          async (file) => await new SubscriberLoader(file, container).load()
-        )
-      )
+      await new SubscriberLoader(
+        path.join(pluginDetails.resolve, "subscribers"),
+        container
+      ).load()
     })
   )
+}
+
+async function jobsLoader(plugins: PluginDetails[]) {
+  /**
+   * Load jobs from the medusa/medusa package. Remove once the medusa core is converted to a plugin
+   */
+  await registerJobs([{ resolve: path.join(__dirname, "../") }])
+  await registerJobs(plugins)
 }
 
 async function loadEntrypoints(
@@ -71,6 +82,11 @@ async function loadEntrypoints(
   const configModule: ConfigModule = container.resolve(
     ContainerRegistrationKeys.CONFIG_MODULE
   )
+
+  if (shouldLoadBackgroundProcessors(configModule)) {
+    await subscribersLoader(plugins, container)
+    await jobsLoader(plugins)
+  }
 
   if (isWorkerMode(configModule)) {
     return async () => {}
@@ -93,7 +109,6 @@ async function loadEntrypoints(
   })
 
   await adminLoader({ app: expressApp, configModule, rootDirectory })
-  await subscribersLoader(plugins, container)
   await apiLoader({
     container,
     plugins,
@@ -133,9 +148,9 @@ export default async ({
   )
 
   const plugins = getResolvedPlugins(rootDirectory, configModule, true) || []
+  const pluginLinks = await resolvePluginsLinks(plugins, container)
   await registerWorkflows(plugins)
 
-  const pluginLinks = await resolvePluginsLinks(plugins, container)
   const { onApplicationShutdown, onApplicationPrepareShutdown } =
     await loadMedusaApp({
       container,

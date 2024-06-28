@@ -1,7 +1,6 @@
 import { ModuleRegistrationName } from "@medusajs/modules-sdk"
 import {
   ICartModuleService,
-  ICustomerModuleService,
   IFulfillmentModuleService,
   IInventoryServiceNext,
   IOrderModuleService,
@@ -9,9 +8,7 @@ import {
   IPricingModuleService,
   IProductModuleService,
   IRegionModuleService,
-  ISalesChannelModuleService,
   IStockLocationServiceNext,
-  ITaxModuleService,
 } from "@medusajs/types"
 import { ContainerRegistrationKeys } from "@medusajs/utils"
 import { medusaIntegrationTestRunner } from "medusa-test-utils"
@@ -30,16 +27,12 @@ medusaIntegrationTestRunner({
     let appContainer
     let cartModuleService: ICartModuleService
     let regionModuleService: IRegionModuleService
-    let scModuleService: ISalesChannelModuleService
-    let customerModule: ICustomerModuleService
     let productModule: IProductModuleService
-    let pricingModule: IPricingModuleService
     let paymentModule: IPaymentModuleService
+    let pricingModule: IPricingModuleService
     let inventoryModule: IInventoryServiceNext
     let stockLocationModule: IStockLocationServiceNext
     let fulfillmentModule: IFulfillmentModuleService
-    let locationModule: IStockLocationServiceNext
-    let taxModule: ITaxModuleService
     let orderModule: IOrderModuleService
     let remoteLink, remoteQuery
 
@@ -47,24 +40,12 @@ medusaIntegrationTestRunner({
       appContainer = getContainer()
       cartModuleService = appContainer.resolve(ModuleRegistrationName.CART)
       regionModuleService = appContainer.resolve(ModuleRegistrationName.REGION)
-      scModuleService = appContainer.resolve(
-        ModuleRegistrationName.SALES_CHANNEL
-      )
-      customerModule = appContainer.resolve(ModuleRegistrationName.CUSTOMER)
       productModule = appContainer.resolve(ModuleRegistrationName.PRODUCT)
-      pricingModule = appContainer.resolve(ModuleRegistrationName.PRICING)
       paymentModule = appContainer.resolve(ModuleRegistrationName.PAYMENT)
       inventoryModule = appContainer.resolve(ModuleRegistrationName.INVENTORY)
-      stockLocationModule = appContainer.resolve(
-        ModuleRegistrationName.STOCK_LOCATION
-      )
       fulfillmentModule = appContainer.resolve(
         ModuleRegistrationName.FULFILLMENT
       )
-      locationModule = appContainer.resolve(
-        ModuleRegistrationName.STOCK_LOCATION
-      )
-      taxModule = appContainer.resolve(ModuleRegistrationName.TAX)
       remoteLink = appContainer.resolve(ContainerRegistrationKeys.REMOTE_LINK)
       remoteQuery = appContainer.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
       orderModule = appContainer.resolve(ModuleRegistrationName.ORDER)
@@ -76,7 +57,7 @@ medusaIntegrationTestRunner({
 
     describe("Orders - Admin", () => {
       it("should get an order", async () => {
-        const created = await orderModule.create({
+        const created = await orderModule.createOrders({
           region_id: "test_region_idclear",
           email: "foo@bar.com",
           items: [
@@ -257,7 +238,7 @@ medusaIntegrationTestRunner({
                 value: "1",
                 precision: 20,
               },
-              detail: {
+              detail: expect.objectContaining({
                 id: expect.any(String),
                 order_id: expect.any(String),
                 version: 1,
@@ -301,7 +282,7 @@ medusaIntegrationTestRunner({
                 return_received_quantity: 0,
                 return_dismissed_quantity: 0,
                 written_off_quantity: 0,
-              },
+              }),
               subtotal: 50,
               total: 50,
               original_total: 50,
@@ -309,6 +290,14 @@ medusaIntegrationTestRunner({
               discount_tax_total: 0,
               tax_total: 0,
               original_tax_total: 0,
+              refundable_total: 50,
+              refundable_total_per_unit: 50,
+              fulfilled_total: 0,
+              return_dismissed_total: 0,
+              return_received_total: 0,
+              return_requested_total: 0,
+              shipped_total: 0,
+              write_off_total: 0,
               raw_subtotal: {
                 value: "50",
                 precision: 20,
@@ -336,6 +325,38 @@ medusaIntegrationTestRunner({
               raw_original_tax_total: {
                 value: "0",
                 precision: 20,
+              },
+              raw_refundable_total: {
+                precision: 20,
+                value: "49.999999999999999995",
+              },
+              raw_refundable_total_per_unit: {
+                precision: 20,
+                value: "49.999999999999999995",
+              },
+              raw_fulfilled_total: {
+                precision: 20,
+                value: "0",
+              },
+              raw_return_dismissed_total: {
+                precision: 20,
+                value: "0",
+              },
+              raw_return_received_total: {
+                precision: 20,
+                value: "0",
+              },
+              raw_return_requested_total: {
+                precision: 20,
+                value: "0",
+              },
+              raw_shipped_total: {
+                precision: 20,
+                value: "0",
+              },
+              raw_write_off_total: {
+                precision: 20,
+                value: "0",
               },
             },
           ],

@@ -23,7 +23,6 @@ type CodeBlockLineProps = {
   showLineNumber: boolean
   lineNumberColorClassName: string
   lineNumberBgClassName: string
-  noLineNumbers?: boolean
 } & Pick<RenderProps, "getLineProps" | "getTokenProps">
 
 export const CodeBlockLine = ({
@@ -268,7 +267,7 @@ export const CodeBlockLine = ({
                   tooltipClassName="font-base"
                   render={({ content }) => (
                     <MarkdownContent
-                      allowedElements={["a", "strong", "code"]}
+                      allowedElements={["a", "strong", "code", "br"]}
                       unwrapDisallowed={true}
                     >
                       {content || ""}

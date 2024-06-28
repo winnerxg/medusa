@@ -1,8 +1,8 @@
 import { PencilSquare, Plus } from "@medusajs/icons"
 import { Container, Heading } from "@medusajs/ui"
 import { useTranslation } from "react-i18next"
-import { ProductDTO } from "@medusajs/types"
 import { keepPreviousData } from "@tanstack/react-query"
+import { HttpTypes } from "@medusajs/types"
 
 import { ActionMenu } from "../../../../../components/common/action-menu"
 import { DataTable } from "../../../../../components/table/data-table"
@@ -13,7 +13,7 @@ import { useProductVariantTableQuery } from "./use-variant-table-query"
 import { useProductVariants } from "../../../../../hooks/api/products"
 
 type ProductVariantSectionProps = {
-  product: ProductDTO
+  product: HttpTypes.AdminProduct
 }
 
 const PAGE_SIZE = 10
@@ -30,6 +30,7 @@ export const ProductVariantSection = ({
     product.id,
     {
       ...searchParams,
+      fields: "*inventory_items.inventory.location_levels,+inventory_quantity",
     },
     {
       placeholderData: keepPreviousData,
@@ -86,6 +87,9 @@ export const ProductVariantSection = ({
         pageSize={PAGE_SIZE}
         isLoading={isLoading}
         orderBy={["title", "created_at", "updated_at"]}
+        navigateTo={(row) =>
+          `/products/${row.original.product_id}/variants/${row.id}`
+        }
         pagination
         search
         queryObject={raw}

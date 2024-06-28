@@ -1,11 +1,21 @@
 import { MedusaError } from "@medusajs/utils"
-import { ruleAttributesMap } from "./rule-attributes-map"
+import { getRuleAttributesMap } from "./rule-attributes-map"
 
-export function validateRuleAttribute(
-  ruleType: string,
+export function validateRuleAttribute(attributes: {
+  promotionType: string | undefined
+  ruleType: string
   ruleAttributeId: string
-) {
-  const ruleAttributes = ruleAttributesMap[ruleType] || []
+  applicationMethodType?: string
+}) {
+  const { promotionType, ruleType, ruleAttributeId, applicationMethodType } =
+    attributes
+
+  const ruleAttributes =
+    getRuleAttributesMap({
+      promotionType,
+      applicationMethodType,
+    })[ruleType] || []
+
   const ruleAttribute = ruleAttributes.find((obj) => obj.id === ruleAttributeId)
 
   if (!ruleAttribute) {

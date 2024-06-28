@@ -3,6 +3,7 @@ import { Button, ProgressStatus, ProgressTabs, toast } from "@medusajs/ui"
 import { useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { SalesChannelDTO, HttpTypes } from "@medusajs/types"
 import {
   RouteFocusModal,
   useRouteModal,
@@ -20,7 +21,7 @@ import { ProductCreateInventoryKitForm } from "../product-create-inventory-kit-f
 import { ProductCreateVariantsForm } from "../product-create-variants-form"
 import { isFetchError } from "../../../../../lib/is-fetch-error"
 import { sdk } from "../../../../../lib/client"
-import { HttpTypes } from "@medusajs/types"
+import { useRegions } from "../../../../../hooks/api/regions.tsx"
 
 enum Tab {
   DETAILS = "details",
@@ -35,7 +36,11 @@ const SAVE_DRAFT_BUTTON = "save-draft-button"
 
 let LAST_VISITED_TAB: Tab | null = null
 
-export const ProductCreateForm = () => {
+type ProductCreateFormProps = { defaultChannel?: SalesChannelDTO }
+
+export const ProductCreateForm = ({
+  defaultChannel,
+}: ProductCreateFormProps) => {
   const [tab, setTab] = useState<Tab>(Tab.DETAILS)
   const [tabState, setTabState] = useState<TabState>({
     [Tab.DETAILS]: "in-progress",
@@ -48,15 +53,32 @@ export const ProductCreateForm = () => {
   const { handleSuccess } = useRouteModal()
 
   const form = useForm<ProductCreateSchemaType>({
-    defaultValues: PRODUCT_CREATE_FORM_DEFAULTS,
+    defaultValues: {
+      ...PRODUCT_CREATE_FORM_DEFAULTS,
+      sales_channels: defaultChannel
+        ? [{ id: defaultChannel.id, name: defaultChannel.name }]
+        : [],
+    },
     resolver: zodResolver(ProductCreateSchema),
   })
 
   const { mutateAsync, isPending } = useCreateProduct()
+  const { regions } = useRegions({ limit: 9999 })
+
+  const regionsCurrencyMap = useMemo(() => {
+    if (!regions?.length) {
+      return {}
+    }
+
+    return regions.reduce((acc, reg) => {
+      acc[reg.id] = reg.currency_code
+      return acc
+    }, {})
+  }, regions)
 
   /**
    * TODO: Important to revisit this - use variants watch so high in the tree can cause needless rerenders of the entire page
-   * which is suboptimal when rereners are caused by bulk editor changes
+   * which is suboptimal when rerenders are caused by bulk editor changes
    */
 
   const watchedVariants = useWatch({
@@ -114,10 +136,10 @@ export const ProductCreateForm = () => {
 
         const { product } = await mutateAsync(
           normalizeProductFormValues({
-            // TODO: workflow should handle inventory creation
             ...payload,
             media: uploadedMedia,
             status: (isDraftSubmission ? "draft" : "published") as any,
+            regionsCurrencyMap,
           })
         )
 

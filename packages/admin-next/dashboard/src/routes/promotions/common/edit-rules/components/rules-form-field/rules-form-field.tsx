@@ -1,31 +1,23 @@
 import { XMarkMini } from "@medusajs/icons"
-import {
-  RuleAttributeOptionsResponse,
-  RuleOperatorOptionsResponse,
-} from "@medusajs/types"
+import { PromotionDTO } from "@medusajs/types"
 import { Badge, Button, Heading, Select, Text } from "@medusajs/ui"
-import { Fragment } from "react"
-import {
-  FieldValues,
-  Path,
-  UseFieldArrayAppend,
-  UseFieldArrayRemove,
-  UseFieldArrayUpdate,
-  UseFormReturn,
-} from "react-hook-form"
+import { Fragment, useEffect } from "react"
+import { useFieldArray, UseFormReturn, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Form } from "../../../../../../components/common/form"
+import {
+  usePromotionRuleAttributes,
+  usePromotionRules,
+} from "../../../../../../hooks/api/promotions"
+import { CreatePromotionSchemaType } from "../../../../promotion-create/components/create-promotion-form/form-schema"
+import { generateRuleAttributes } from "../edit-rules-form/utils"
 import { RuleValueFormField } from "../rule-value-form-field"
+import { requiredProductRule } from "./constants"
 
-type RulesFormFieldType<TSchema extends FieldValues> = {
-  form: UseFormReturn<TSchema>
+type RulesFormFieldType = {
+  promotion?: PromotionDTO
+  form: UseFormReturn<CreatePromotionSchemaType>
   ruleType: "rules" | "target-rules" | "buy-rules"
-  fields: any[]
-  attributes: RuleAttributeOptionsResponse[]
-  operators: RuleOperatorOptionsResponse[]
-  removeRule: UseFieldArrayRemove
-  updateRule: UseFieldArrayUpdate<TSchema>
-  appendRule: UseFieldArrayAppend<TSchema>
   setRulesToRemove?: any
   rulesToRemove?: any
   scope?:
@@ -34,20 +26,92 @@ type RulesFormFieldType<TSchema extends FieldValues> = {
     | "application_method.target_rules"
 }
 
-export const RulesFormField = <TSchema extends FieldValues>({
+export const RulesFormField = ({
   form,
   ruleType,
-  fields,
-  attributes,
-  operators,
-  removeRule,
-  updateRule,
-  appendRule,
   setRulesToRemove,
   rulesToRemove,
   scope = "rules",
-}: RulesFormFieldType<TSchema>) => {
+  promotion,
+}: RulesFormFieldType) => {
   const { t } = useTranslation()
+  const formData = form.getValues()
+  const { attributes } = usePromotionRuleAttributes(ruleType, formData.type)
+
+  const { fields, append, remove, update, replace } = useFieldArray({
+    control: form.control,
+    name: scope,
+    keyName: scope,
+  })
+
+  const promotionType = useWatch({
+    control: form.control,
+    name: "type",
+    defaultValue: promotion?.type,
+  })
+
+  const applicationMethodType = useWatch({
+    control: form.control,
+    name: "application_method.type",
+    defaultValue: promotion?.application_method?.type,
+  })
+
+  const query: Record<string, string> = promotionType
+    ? {
+        promotion_type: promotionType,
+        application_method_type: applicationMethodType,
+      }
+    : {}
+
+  const { rules, isLoading } = usePromotionRules(
+    promotion?.id || null,
+    ruleType,
+    query,
+    {
+      enabled: !!promotion?.id || (!!promotionType && !!applicationMethodType),
+    }
+  )
+
+  useEffect(() => {
+    if (isLoading) {
+      return
+    }
+
+    if (ruleType === "rules" && !fields.length) {
+      replace(generateRuleAttributes(rules) as any)
+    }
+
+    if (ruleType === "rules" && promotionType === "standard") {
+      form.resetField("application_method.buy_rules")
+      form.resetField("application_method.target_rules")
+    }
+
+    if (
+      ["buy-rules", "target-rules"].includes(ruleType) &&
+      promotionType === "standard"
+    ) {
+      form.resetField(scope)
+      replace([])
+    }
+
+    if (
+      ["buy-rules", "target-rules"].includes(ruleType) &&
+      promotionType === "buyget"
+    ) {
+      form.resetField(scope)
+      const rulesToAppend = promotion?.id
+        ? rules
+        : [...rules, requiredProductRule]
+
+      replace(generateRuleAttributes(rulesToAppend) as any)
+
+      return
+    }
+
+    form.resetField(scope)
+
+    replace(generateRuleAttributes(rules) as any)
+  }, [promotionType, isLoading])
 
   return (
     <div className="flex flex-col">
@@ -55,24 +119,24 @@ export const RulesFormField = <TSchema extends FieldValues>({
         {t(`promotions.fields.conditions.${ruleType}.title`)}
       </Heading>
 
-      <Text className="text-ui-fg-subtle txt-small mb-10">
+      <Text className="text-ui-fg-subtle txt-small mb-6">
         {t(`promotions.fields.conditions.${ruleType}.description`)}
       </Text>
 
       {fields.map((fieldRule: any, index) => {
         const identifier = fieldRule.id
         const { ref: attributeRef, ...attributeField } = form.register(
-          `${scope}.${index}.attribute` as Path<TSchema>
+          `${scope}.${index}.attribute`
         )
         const { ref: operatorRef, ...operatorsField } = form.register(
-          `${scope}.${index}.operator` as Path<TSchema>
+          `${scope}.${index}.operator`
         )
         const { ref: valuesRef, ...valuesField } = form.register(
-          `${scope}.${index}.values` as Path<TSchema>
+          `${scope}.${index}.values`
         )
 
         return (
-          <Fragment key={`${fieldRule.id}.${index}`}>
+          <Fragment key={`${fieldRule.id}.${index}.${fieldRule.attribute}`}>
             <div className="bg-ui-bg-subtle border-ui-border-base flex flex-row gap-2 rounded-xl border px-2 py-2">
               <div className="grow">
                 <Form.Field
@@ -102,7 +166,15 @@ export const RulesFormField = <TSchema extends FieldValues>({
                           <Select
                             {...field}
                             onValueChange={(e) => {
-                              updateRule(index, { ...fieldRule, values: [] })
+                              const currentAttributeOption =
+                                attributeOptions.find((ao) => ao.id === e)
+
+                              update(index, {
+                                ...fieldRule,
+                                values: [],
+                                disguised:
+                                  currentAttributeOption?.disguised || false,
+                              })
                               onChange(e)
                             }}
                             disabled={fieldRule.required}
@@ -143,14 +215,14 @@ export const RulesFormField = <TSchema extends FieldValues>({
                     key={`${identifier}.${scope}.${operatorsField.name}`}
                     {...operatorsField}
                     render={({ field: { onChange, ref, ...field } }) => {
+                      const currentAttributeOption = attributes.find(
+                        (attr) => attr.value === fieldRule.attribute
+                      )
+
                       return (
                         <Form.Item className="basis-1/2">
                           <Form.Control>
-                            <Select
-                              {...field}
-                              onValueChange={onChange}
-                              disabled={fieldRule.required}
-                            >
+                            <Select {...field} onValueChange={onChange}>
                               <Select.Trigger
                                 ref={operatorRef}
                                 className="bg-ui-bg-base"
@@ -159,16 +231,18 @@ export const RulesFormField = <TSchema extends FieldValues>({
                               </Select.Trigger>
 
                               <Select.Content>
-                                {operators?.map((c, i) => (
-                                  <Select.Item
-                                    key={`${identifier}-operator-option-${i}`}
-                                    value={c.value}
-                                  >
-                                    <span className="text-ui-fg-subtle">
-                                      {c.label}
-                                    </span>
-                                  </Select.Item>
-                                ))}
+                                {currentAttributeOption?.operators?.map(
+                                  (c, i) => (
+                                    <Select.Item
+                                      key={`${identifier}-operator-option-${i}`}
+                                      value={c.value}
+                                    >
+                                      <span className="text-ui-fg-subtle">
+                                        {c.label}
+                                      </span>
+                                    </Select.Item>
+                                  )
+                                )}
                               </Select.Content>
                             </Select>
                           </Form.Control>
@@ -199,11 +273,10 @@ export const RulesFormField = <TSchema extends FieldValues>({
                   }`}
                   onClick={() => {
                     if (!fieldRule.required) {
-                      fieldRule.id &&
-                        setRulesToRemove &&
+                      setRulesToRemove &&
                         setRulesToRemove([...rulesToRemove, fieldRule])
 
-                      removeRule(index)
+                      remove(index)
                     }
                   }}
                 />
@@ -223,13 +296,13 @@ export const RulesFormField = <TSchema extends FieldValues>({
         )
       })}
 
-      <div className="mt-8">
+      <div className={!!fields.length ? "mt-6" : ""}>
         <Button
           type="button"
           variant="secondary"
           className="inline-block"
           onClick={() => {
-            appendRule({
+            append({
               attribute: "",
               operator: "",
               values: [],
@@ -240,22 +313,24 @@ export const RulesFormField = <TSchema extends FieldValues>({
           {t("promotions.fields.addCondition")}
         </Button>
 
-        <Button
-          type="button"
-          variant="transparent"
-          className="text-ui-fg-muted hover:text-ui-fg-subtle ml-2 inline-block"
-          onClick={() => {
-            const indicesToRemove = fields
-              .map((field: any, index) => (field.required ? null : index))
-              .filter((f) => f !== null)
+        {!!fields.length && (
+          <Button
+            type="button"
+            variant="transparent"
+            className="text-ui-fg-muted hover:text-ui-fg-subtle ml-2 inline-block"
+            onClick={() => {
+              const indicesToRemove = fields
+                .map((field: any, index) => (field.required ? null : index))
+                .filter((f) => f !== null)
 
-            setRulesToRemove &&
-              setRulesToRemove(fields.filter((field: any) => !field.required))
-            removeRule(indicesToRemove)
-          }}
-        >
-          {t("promotions.fields.clearAll")}
-        </Button>
+              setRulesToRemove &&
+                setRulesToRemove(fields.filter((field: any) => !field.required))
+              remove(indicesToRemove)
+            }}
+          >
+            {t("promotions.fields.clearAll")}
+          </Button>
+        )}
       </div>
     </div>
   )

@@ -1,12 +1,16 @@
 import { OrderDTO } from "@medusajs/types"
+import { Modules, OrderEvents } from "@medusajs/utils"
 import {
   WorkflowData,
   createWorkflow,
   parallelize,
   transform,
 } from "@medusajs/workflows-sdk"
-import { useRemoteQueryStep } from "../../../common"
-import { linkOrderAndPaymentCollectionsStep } from "../../../order/steps"
+import {
+  createRemoteLinkStep,
+  emitEventStep,
+  useRemoteQueryStep,
+} from "../../../common"
 import { authorizePaymentSessionStep } from "../../../payment/steps/authorize-payment-session"
 import { createOrderFromCartStep, validateCartPaymentsStep } from "../steps"
 import { reserveInventoryStep } from "../steps/reserve-inventory"
@@ -75,16 +79,20 @@ export const completeCartWorkflow = createWorkflow(
 
     const order = createOrderFromCartStep({ cart: finalCart })
 
-    const linkOrderPaymentCollection = transform({ order, cart }, (data) => ({
-      links: [
-        {
-          order_id: data.order.id,
-          payment_collection_id: data.cart.payment_collection.id,
+    createRemoteLinkStep([
+      {
+        [Modules.ORDER]: { order_id: order.id },
+        [Modules.CART]: { cart_id: finalCart.id },
+      },
+      {
+        [Modules.ORDER]: { order_id: order.id },
+        [Modules.PAYMENT]: {
+          payment_collection_id: cart.payment_collection.id,
         },
-      ],
-    }))
+      },
+    ])
 
-    linkOrderAndPaymentCollectionsStep(linkOrderPaymentCollection)
+    emitEventStep({ eventName: OrderEvents.PLACED, data: { id: order.id } })
 
     return order
   }

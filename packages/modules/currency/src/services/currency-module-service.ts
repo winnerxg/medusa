@@ -1,39 +1,35 @@
 import {
+  BaseFilterable,
+  Context,
+  CurrencyTypes,
   DAL,
+  FilterableCurrencyProps,
+  FindConfig,
+  ICurrencyModuleService,
   InternalModuleDeclaration,
   ModuleJoinerConfig,
   ModulesSdkTypes,
-  ICurrencyModuleService,
-  CurrencyTypes,
-  Context,
-  FindConfig,
-  FilterableCurrencyProps,
-  BaseFilterable,
 } from "@medusajs/types"
-import { ModulesSdkUtils } from "@medusajs/utils"
 
+import { MedusaService } from "@medusajs/utils"
 import { Currency } from "@models"
 import { entityNameToLinkableKeysMap, joinerConfig } from "../joiner-config"
 
-const generateMethodForModels = []
-
 type InjectedDependencies = {
   baseRepository: DAL.RepositoryService
-  currencyService: ModulesSdkTypes.InternalModuleService<any>
+  currencyService: ModulesSdkTypes.IMedusaInternalService<typeof Currency>
 }
 
-export default class CurrencyModuleService<TEntity extends Currency = Currency>
-  extends ModulesSdkUtils.abstractModuleServiceFactory<
-    InjectedDependencies,
-    CurrencyTypes.CurrencyDTO,
-    {
-      Currency: { dto: CurrencyTypes.CurrencyDTO }
-    }
-  >(Currency, generateMethodForModels, entityNameToLinkableKeysMap)
+export default class CurrencyModuleService
+  extends MedusaService<{
+    Currency: { dto: CurrencyTypes.CurrencyDTO }
+  }>({ Currency }, entityNameToLinkableKeysMap)
   implements ICurrencyModuleService
 {
   protected baseRepository_: DAL.RepositoryService
-  protected readonly currencyService_: ModulesSdkTypes.InternalModuleService<TEntity>
+  protected readonly currencyService_: ModulesSdkTypes.IMedusaInternalService<
+    typeof Currency
+  >
 
   constructor(
     { baseRepository, currencyService }: InjectedDependencies,
@@ -49,36 +45,39 @@ export default class CurrencyModuleService<TEntity extends Currency = Currency>
     return joinerConfig
   }
 
-  retrieve(
+  // @ts-expect-error
+  async retrieveCurrency(
     code: string,
     config?: FindConfig<CurrencyTypes.CurrencyDTO>,
     sharedContext?: Context
   ): Promise<CurrencyTypes.CurrencyDTO> {
-    return this.currencyService_.retrieve(
-      code?.toLowerCase(),
+    return await super.retrieveCurrency(
+      CurrencyModuleService.normalizeFilters({ code: [code] })!.code![0],
       config,
       sharedContext
     )
   }
 
-  list(
+  // @ts-expect-error
+  async listCurrencies(
     filters?: FilterableCurrencyProps,
     config?: FindConfig<CurrencyTypes.CurrencyDTO>,
     sharedContext?: Context
   ): Promise<CurrencyTypes.CurrencyDTO[]> {
-    return this.currencyService_.list(
+    return await super.listCurrencies(
       CurrencyModuleService.normalizeFilters(filters),
       config,
       sharedContext
     )
   }
 
-  listAndCount(
+  // @ts-expect-error
+  async listAndCountCurrencies(
     filters?: FilterableCurrencyProps,
     config?: FindConfig<CurrencyTypes.CurrencyDTO>,
     sharedContext?: Context
   ): Promise<[CurrencyTypes.CurrencyDTO[], number]> {
-    return this.currencyService_.listAndCount(
+    return await super.listAndCountCurrencies(
       CurrencyModuleService.normalizeFilters(filters),
       config,
       sharedContext

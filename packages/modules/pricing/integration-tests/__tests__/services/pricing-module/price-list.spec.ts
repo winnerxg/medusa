@@ -1,22 +1,22 @@
-import { Modules } from "@medusajs/modules-sdk"
 import { IPricingModuleService } from "@medusajs/types"
+import {
+  CommonEvents,
+  composeMessage,
+  Modules,
+  PricingEvents,
+} from "@medusajs/utils"
 import {
   MockEventBusService,
   moduleIntegrationTestRunner,
-  SuiteOptions,
 } from "medusa-test-utils"
 import { createPriceLists } from "../../../__fixtures__/price-list"
 import { createPriceSets } from "../../../__fixtures__/price-set"
-import { CommonEvents, composeMessage, PricingEvents } from "@medusajs/utils"
 
 jest.setTimeout(30000)
 
-moduleIntegrationTestRunner({
+moduleIntegrationTestRunner<IPricingModuleService>({
   moduleName: Modules.PRICING,
-  testSuite: ({
-    MikroOrmWrapper,
-    service,
-  }: SuiteOptions<IPricingModuleService>) => {
+  testSuite: ({ MikroOrmWrapper, service }) => {
     let eventBusEmitSpy
 
     beforeEach(() => {
@@ -507,32 +507,32 @@ moduleIntegrationTestRunner({
           const events = eventBusEmitSpy.mock.calls[0][0]
           expect(events).toHaveLength(4)
           expect(events[0]).toEqual(
-            composeMessage(PricingEvents.price_list_created, {
-              service: Modules.PRICING,
+            composeMessage(PricingEvents.PRICE_LIST_CREATED, {
+              source: Modules.PRICING,
               action: CommonEvents.CREATED,
               object: "price_list",
               data: { id: priceList.id },
             })
           )
           expect(events[1]).toEqual(
-            composeMessage(PricingEvents.price_list_rule_created, {
-              service: Modules.PRICING,
+            composeMessage(PricingEvents.PRICE_LIST_RULE_CREATED, {
+              source: Modules.PRICING,
               action: CommonEvents.CREATED,
               object: "price_list_rule",
               data: { id: priceList.price_list_rules?.[0].id },
             })
           )
           expect(events[2]).toEqual(
-            composeMessage(PricingEvents.price_list_rule_created, {
-              service: Modules.PRICING,
+            composeMessage(PricingEvents.PRICE_LIST_RULE_CREATED, {
+              source: Modules.PRICING,
               action: CommonEvents.CREATED,
               object: "price_list_rule",
               data: { id: priceList.price_list_rules?.[1].id },
             })
           )
           expect(events[3]).toEqual(
-            composeMessage(PricingEvents.price_created, {
-              service: Modules.PRICING,
+            composeMessage(PricingEvents.PRICE_CREATED, {
+              source: Modules.PRICING,
               action: CommonEvents.CREATED,
               object: "price",
               data: { id: priceList.prices![0].id },
@@ -745,41 +745,6 @@ moduleIntegrationTestRunner({
           )
         })
 
-        it("should fail to add a price with non-existing rule-types in the price-set to a priceList", async () => {
-          await service.createRuleTypes([
-            {
-              name: "twitter_handle",
-              rule_attribute: "twitter_handle",
-            },
-          ])
-
-          let error
-          try {
-            await service.addPriceListPrices([
-              {
-                price_list_id: "price-list-1",
-                prices: [
-                  {
-                    amount: 123,
-                    currency_code: "EUR",
-                    price_set_id: "price-set-1",
-                    rules: {
-                      twitter_handle: "owjuhl",
-                    },
-                  },
-                ],
-              },
-            ])
-          } catch (err) {
-            error = err
-          }
-
-          expect(error.message).toEqual(
-            "" +
-              `Invalid rule type configuration: Price set rules doesn't exist for rule_attribute "twitter_handle" in price set price-set-1`
-          )
-        })
-
         it("should add a price with rules to a priceList successfully", async () => {
           await service.createRuleTypes([
             {
@@ -787,15 +752,6 @@ moduleIntegrationTestRunner({
               rule_attribute: "region_id",
             },
           ])
-
-          const r = await service.addRules([
-            {
-              priceSetId: "price-set-1",
-              rules: [{ attribute: "region_id" }],
-            },
-          ])
-
-          jest.clearAllMocks()
 
           await service.addPriceListPrices([
             {
@@ -866,16 +822,16 @@ moduleIntegrationTestRunner({
 
           expect(events).toHaveLength(2)
           expect(events[0]).toEqual(
-            composeMessage(PricingEvents.price_created, {
-              service: Modules.PRICING,
+            composeMessage(PricingEvents.PRICE_CREATED, {
+              source: Modules.PRICING,
               action: CommonEvents.CREATED,
               object: "price",
               data: { id: priceList.prices![0].id },
             })
           )
           expect(events[1]).toEqual(
-            composeMessage(PricingEvents.price_rule_created, {
-              service: Modules.PRICING,
+            composeMessage(PricingEvents.PRICE_RULE_CREATED, {
+              source: Modules.PRICING,
               action: CommonEvents.CREATED,
               object: "price_rule",
               data: { id: priceList.prices![0].price_rules![0].id },
@@ -886,14 +842,7 @@ moduleIntegrationTestRunner({
 
       describe("updatePriceListPrices", () => {
         it("should update a price to a priceList successfully", async () => {
-          const [priceSet] = await service.create([
-            {
-              rules: [
-                { rule_attribute: "region_id" },
-                { rule_attribute: "customer_group_id" },
-              ],
-            },
-          ])
+          const [priceSet] = await service.createPriceSets([{}])
 
           await service.addPriceListPrices([
             {
@@ -907,7 +856,7 @@ moduleIntegrationTestRunner({
                   rules: {
                     region_id: "test",
                   },
-                } as any,
+                },
               ],
             },
           ])
@@ -981,57 +930,11 @@ moduleIntegrationTestRunner({
             })
           )
         })
-
-        it("should fail to add a price with non-existing rule-types in the price-set to a priceList", async () => {
-          await service.createRuleTypes([
-            { name: "twitter_handle", rule_attribute: "twitter_handle" },
-            { name: "region_id", rule_attribute: "region_id" },
-          ])
-
-          const [priceSet] = await service.create([
-            { rules: [{ rule_attribute: "region_id" }] },
-          ])
-
-          await service.addPriceListPrices([
-            {
-              price_list_id: "price-list-1",
-              prices: [
-                {
-                  id: "test-price-id",
-                  amount: 123,
-                  currency_code: "EUR",
-                  price_set_id: priceSet.id,
-                  rules: { region_id: "test" },
-                } as any,
-              ],
-            },
-          ])
-
-          const error = await service
-            .updatePriceListPrices([
-              {
-                price_list_id: "price-list-1",
-                prices: [
-                  {
-                    id: "test-price-id",
-                    amount: 123,
-                    price_set_id: priceSet.id,
-                    rules: { twitter_handle: "owjuhl" },
-                  },
-                ],
-              },
-            ])
-            .catch((e) => e)
-
-          expect(error.message).toEqual(
-            `Invalid rule type configuration: Price set rules doesn't exist for rule_attribute "twitter_handle" in price set ${priceSet.id}`
-          )
-        })
       })
 
       describe("removePrices", () => {
         it("should remove prices from a priceList successfully", async () => {
-          const [priceSet] = await service.create([
+          const [priceSet] = await service.createPriceSets([
             { rules: [{ rule_attribute: "region_id" }] },
           ])
 

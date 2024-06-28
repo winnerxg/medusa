@@ -6,6 +6,7 @@ import { InventoryItemLocationLevelsSection } from "./components/inventory-item-
 import { InventoryItemReservationsSection } from "./components/inventory-item-reservations"
 import { JsonViewSection } from "../../../components/common/json-view-section"
 import { useInventoryItem } from "../../../hooks/api/inventory"
+import { InventoryItemVariantsSection } from "./components/inventory-item-variants/variants-section"
 import { inventoryItemLoader } from "./loader"
 
 export const InventoryDetail = () => {
@@ -23,7 +24,7 @@ export const InventoryDetail = () => {
   } = useInventoryItem(
     id!,
     {
-      fields: "*variants",
+      fields: "*variants,*variants.product,*variants.options",
     },
     {
       initialData,
@@ -33,7 +34,6 @@ export const InventoryDetail = () => {
   if (isLoading) {
     return <div>Loading...</div>
   }
-
   if (isError || !inventory_item) {
     if (error) {
       throw error
@@ -45,7 +45,7 @@ export const InventoryDetail = () => {
   return (
     <div className="flex flex-col gap-y-2">
       <div className="flex flex-col gap-x-4 lg:flex-row lg:items-start">
-        <div className="flex w-full flex-col gap-y-2">
+        <div className="flex w-full flex-col gap-y-3">
           <InventoryItemGeneralSection inventoryItem={inventory_item} />
           <InventoryItemLocationLevelsSection inventoryItem={inventory_item} />
           <InventoryItemReservationsSection inventoryItem={inventory_item} />
@@ -55,6 +55,7 @@ export const InventoryDetail = () => {
           <Outlet />
         </div>
         <div className="mt-2 flex w-full max-w-[100%] flex-col gap-y-2 lg:mt-0 lg:max-w-[400px]">
+          <InventoryItemVariantsSection variants={inventory_item.variants} />
           <InventoryItemAttributeSection inventoryItem={inventory_item} />
           <div className="lg:hidden">
             <JsonViewSection data={inventory_item} />

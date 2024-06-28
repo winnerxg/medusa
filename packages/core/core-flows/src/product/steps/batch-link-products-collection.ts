@@ -1,6 +1,5 @@
 import { ModuleRegistrationName } from "@medusajs/modules-sdk"
-import { IProductModuleService } from "@medusajs/types"
-import { LinkWorkflowInput } from "@medusajs/types/src"
+import { IProductModuleService, LinkWorkflowInput } from "@medusajs/types"
 import { StepResponse, createStep } from "@medusajs/workflows-sdk"
 
 export const batchLinkProductsToCollectionStepId =
@@ -16,7 +15,7 @@ export const batchLinkProductsToCollectionStep = createStep(
       return new StepResponse(void 0, null)
     }
 
-    const dbCollection = await service.retrieveCollection(data.id, {
+    const dbCollection = await service.retrieveProductCollection(data.id, {
       take: null,
       select: ["id", "products.id"],
       relations: ["products"],
@@ -29,7 +28,7 @@ export const batchLinkProductsToCollectionStep = createStep(
       ...(data.add ?? []),
     ]
 
-    await service.updateCollections(data.id, {
+    await service.updateProductCollections(data.id, {
       product_ids: newProductIds,
     })
 
@@ -47,7 +46,7 @@ export const batchLinkProductsToCollectionStep = createStep(
       ModuleRegistrationName.PRODUCT
     )
 
-    await service.updateCollections(prevData.id, {
+    await service.updateProductCollections(prevData.id, {
       product_ids: prevData.productIds,
     })
   }

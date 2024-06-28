@@ -1,3 +1,7 @@
+import {
+  batchShippingOptionRulesWorkflow,
+  createShippingOptionsWorkflow,
+} from "@medusajs/core-flows"
 import { ModuleRegistrationName } from "@medusajs/modules-sdk"
 import {
   BatchWorkflowInput,
@@ -10,16 +14,12 @@ import {
   ShippingProfileDTO,
   UpdateShippingOptionRuleDTO,
 } from "@medusajs/types"
-import { medusaIntegrationTestRunner } from "medusa-test-utils/dist"
-import {
-  batchShippingOptionRulesWorkflow,
-  createShippingOptionsWorkflow,
-} from "@medusajs/core-flows"
 import {
   ContainerRegistrationKeys,
-  remoteQueryObjectFromString,
   RuleOperator,
+  remoteQueryObjectFromString,
 } from "@medusajs/utils"
+import { medusaIntegrationTestRunner } from "medusa-test-utils"
 
 jest.setTimeout(100000)
 
@@ -35,7 +35,7 @@ async function createShippingOptionFixture({
     ModuleRegistrationName.REGION
   ) as IRegionModuleService
 
-  const [region] = await regionService.create([
+  const [region] = await regionService.createRegions([
     {
       name: "Test region",
       currency_code: "eur",
@@ -136,7 +136,7 @@ medusaIntegrationTestRunner({
           type: "default",
         })
 
-        fulfillmentSet = await service.create({
+        fulfillmentSet = await service.createFulfillmentSets({
           name: "Test fulfillment set",
           type: "manual_test",
         })

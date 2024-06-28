@@ -1,4 +1,7 @@
-import { updateProductCategoryWorkflow } from "@medusajs/core-flows"
+import {
+  deleteProductCategoriesWorkflow,
+  updateProductCategoriesWorkflow,
+} from "@medusajs/core-flows"
 import { AdminProductCategoryResponse } from "@medusajs/types"
 import {
   AuthenticatedMedusaRequest,
@@ -9,6 +12,7 @@ import {
   AdminProductCategoryParamsType,
   AdminUpdateProductCategoryType,
 } from "../validators"
+import { MedusaError } from "@medusajs/utils"
 
 export const GET = async (
   req: AuthenticatedMedusaRequest<AdminProductCategoryParamsType>,
@@ -21,6 +25,13 @@ export const GET = async (
     req.remoteQueryConfig.fields
   )
 
+  if (!category) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_FOUND,
+      `Product category with id: ${req.params.id} was not found`
+    )
+  }
+
   res.json({ product_category: category })
 }
 
@@ -30,9 +41,8 @@ export const POST = async (
 ) => {
   const { id } = req.params
 
-  // TODO: Should be converted to bulk update
-  await updateProductCategoryWorkflow(req.scope).run({
-    input: { id, data: req.validatedBody },
+  await updateProductCategoriesWorkflow(req.scope).run({
+    input: { selector: { id }, update: req.validatedBody },
   })
 
   const [category] = await refetchEntities(
@@ -43,4 +53,21 @@ export const POST = async (
   )
 
   res.status(200).json({ product_category: category })
+}
+
+export const DELETE = async (
+  req: AuthenticatedMedusaRequest,
+  res: MedusaResponse
+) => {
+  const id = req.params.id
+
+  await deleteProductCategoriesWorkflow(req.scope).run({
+    input: [id],
+  })
+
+  res.status(200).json({
+    id,
+    object: "product_category",
+    deleted: true,
+  })
 }

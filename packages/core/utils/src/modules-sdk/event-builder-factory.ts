@@ -5,7 +5,7 @@ import { Context, EventBusTypes } from "@medusajs/types"
  *
  * @example
  * const createdFulfillment = eventBuilderFactory({
- *   service: Modules.FULFILLMENT,
+ *   source: Modules.FULFILLMENT,
  *   action: CommonEvents.CREATED,
  *   object: "fulfillment",
  *   eventsEnum: FulfillmentEvents,
@@ -16,24 +16,21 @@ import { Context, EventBusTypes } from "@medusajs/types"
  *   sharedContext,
  * })
  *
- * @param isMainEntity
  * @param action
  * @param object
  * @param eventsEnum
  * @param service
  */
 export function eventBuilderFactory({
-  isMainEntity,
   action,
   object,
   eventsEnum,
-  service,
+  source,
 }: {
-  isMainEntity?: boolean
   action: string
   object: string
   eventsEnum: Record<string, string>
-  service: string
+  source: string
 }) {
   return function ({
     data,
@@ -49,15 +46,17 @@ export function eventBuilderFactory({
     const aggregator = sharedContext.messageAggregator!
     const messages: EventBusTypes.RawMessageFormat[] = []
 
+    // The event enums contains event formatted like so [object]_[action] e.g. PRODUCT_CREATED
+    // We expect the keys of events to be fully uppercased
+    const eventName = eventsEnum[`${object.toUpperCase()}_${action.toUpperCase()}`]
+
     data.forEach((dataItem) => {
       messages.push({
-        service,
+        source,
         action,
         context: sharedContext,
         data: { id: dataItem.id },
-        eventName: isMainEntity
-          ? eventsEnum[action]
-          : eventsEnum[`${object}_${action}`],
+        eventName,
         object,
       })
     })

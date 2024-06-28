@@ -8,16 +8,11 @@ import {
   CustomerGroupDTO,
   FulfillmentDTO,
   FulfillmentProviderDTO,
-  InventoryNext,
+  InventoryTypes,
   InviteDTO,
   OrderDTO,
   PaymentProviderDTO,
   PriceListDTO,
-  ProductCategoryDTO,
-  ProductCollectionDTO,
-  ProductDTO,
-  ProductTypeDTO,
-  ProductVariantDTO,
   PromotionDTO,
   PromotionRuleDTO,
   SalesChannelDTO,
@@ -29,7 +24,6 @@ import {
   UserDTO,
 } from "@medusajs/types"
 
-import { ProductTagDTO } from "@medusajs/types/dist/product"
 import { WorkflowExecutionDTO } from "../routes/workflow-executions/types"
 
 type ListRes = {
@@ -62,9 +56,7 @@ export type UserListRes = { users: UserDTO[] } & ListRes
 export type UserDeleteRes = DeleteRes
 
 // Stores
-export type ExtendedStoreDTO = StoreDTO & {
-  default_currency: CurrencyDTO | null
-}
+export type ExtendedStoreDTO = StoreDTO
 
 export type StoreRes = { store: ExtendedStoreDTO }
 export type StoreListRes = { stores: ExtendedStoreDTO[] } & ListRes
@@ -75,9 +67,9 @@ export type FulfillmentListRes = { fulfillments: FulfillmentDTO[] } & ListRes
 export type FulfillmentDeleteRes = DeleteRes
 
 // Reservations
-export type ReservationRes = { reservation: InventoryNext.ReservationItemDTO }
+export type ReservationRes = { reservation: InventoryTypes.ReservationItemDTO }
 export type ReservationListRes = {
-  reservations: InventoryNext.ReservationItemDTO[]
+  reservations: InventoryTypes.ReservationItemDTO[]
 } & ListRes
 export type ReservationDeleteRes = DeleteRes
 
@@ -104,29 +96,6 @@ export type InviteDeleteRes = DeleteRes
 // Orders
 export type OrderRes = { order: OrderDTO }
 export type OrderListRes = { orders: OrderDTO[] } & ListRes
-
-// Products
-export type ExtendedProductDTO = ProductDTO & {
-  variants: ProductVariantDTO[] | null
-  sales_channels: SalesChannelDTO[] | null
-  collections: ProductCollectionDTO[] | null
-  categories: ProductCategoryDTO[] | null
-}
-export type ProductRes = { product: ExtendedProductDTO }
-export type ProductListRes = { products: ExtendedProductDTO[] } & ListRes
-export type ProductDeleteRes = DeleteRes
-
-// Categories
-export type CategoryRes = { category: ProductCategoryDTO }
-export type CategoriesListRes = { categories: ProductCategoryDTO[] } & ListRes
-
-// Tags
-export type TagRes = { tag: ProductTagDTO }
-export type TagsListRes = { tags: ProductTagDTO[] } & ListRes
-
-// Product Types
-export type ProductTypeRes = { product_type: ProductTypeDTO }
-export type ProductTypeListRes = { product_types: ProductTypeDTO[] } & ListRes
 
 // Payments
 
@@ -176,36 +145,15 @@ export type WorkflowExecutionListRes = {
 export type TaxRegionDeleteRes = DeleteRes
 export type TaxRateDeleteRes = DeleteRes
 
-// Inventory Items
-export type InventoryItemRes = {
-  inventory_item: InventoryNext.InventoryItemDTO & {
-    stocked_quantity: number
-    reserved_quantity: number
-    location_levels?: InventoryNext.InventoryLevelDTO[]
-    variant?: ProductVariantDTO | ProductVariantDTO[]
-  }
-}
-
-export type InventoryItemListRes = {
-  inventory_items: InventoryNext.InventoryItemDTO[]
-} & ListRes
-export type InventoryItemDeleteRes = DeleteRes
-
-export type InventoryItemLocationLevelsRes = {
-  inventory_levels: InventoryNext.InventoryLevelDTO[]
-} & ListRes
-
-export type InventoryItemLevelDeleteRes = DeleteRes
-
 // Reservations
 export type ReservationItemDeleteRes = DeleteRes
 
 export type ReservationItemListRes = {
-  reservations: InventoryNext.ReservationItemDTO[]
+  reservations: InventoryTypes.ReservationItemDTO[]
 } & ListRes
 
 export type ReservationItemRes = {
-  reservation: InventoryNext.ReservationItemDTO
+  reservation: InventoryTypes.ReservationItemDTO
 }
 // Price Lists
 export type PriceListRes = { price_list: PriceListDTO }

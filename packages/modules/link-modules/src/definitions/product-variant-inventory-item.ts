@@ -1,6 +1,5 @@
-import { Modules } from "@medusajs/modules-sdk"
 import { ModuleJoinerConfig } from "@medusajs/types"
-import { LINKS } from "@medusajs/utils"
+import { LINKS, Modules } from "@medusajs/utils"
 
 export const ProductVariantInventoryItem: ModuleJoinerConfig = {
   serviceName: LINKS.ProductVariantInventoryItem,
@@ -34,7 +33,7 @@ export const ProductVariantInventoryItem: ModuleJoinerConfig = {
       foreignKey: "variant_id",
       alias: "variant",
       args: {
-        methodSuffix: "Variants",
+        methodSuffix: "ProductVariants",
       },
     },
     {
@@ -42,6 +41,9 @@ export const ProductVariantInventoryItem: ModuleJoinerConfig = {
       primaryKey: "id",
       foreignKey: "inventory_item_id",
       alias: "inventory",
+      args: {
+        methodSuffix: "InventoryItems",
+      },
       deleteCascade: true,
     },
   ],
@@ -62,13 +64,14 @@ export const ProductVariantInventoryItem: ModuleJoinerConfig = {
     {
       serviceName: Modules.INVENTORY,
       fieldAlias: {
-        variant: "variant_link.variant",
+        variants: "variant_link.variant",
       },
       relationship: {
         serviceName: LINKS.ProductVariantInventoryItem,
         primaryKey: "inventory_item_id",
         foreignKey: "id",
         alias: "variant_link",
+        isList: true,
       },
     },
   ],

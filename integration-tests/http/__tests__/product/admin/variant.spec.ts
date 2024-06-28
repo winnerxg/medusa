@@ -96,11 +96,20 @@ medusaIntegrationTestRunner({
 
     describe("updates a variant's default prices (ignores prices associated with a Price List)", () => {
       it("successfully updates a variant's default prices by changing an existing price (currency_code)", async () => {
+        await api.post(
+          `/admin/pricing/rule-types`,
+          { name: "Region", rule_attribute: "region_id", default_priority: 1 },
+          adminHeaders
+        )
+
         const data = {
           prices: [
             {
               currency_code: "usd",
               amount: 1500,
+              rules: {
+                region_id: "na",
+              },
             },
           ],
         }
@@ -115,6 +124,7 @@ medusaIntegrationTestRunner({
           baseProduct.variants[0].prices.find((p) => p.currency_code === "usd")
             .amount
         ).toEqual(100)
+
         expect(response.status).toEqual(200)
         expect(response.data).toEqual({
           product: expect.objectContaining({
@@ -126,6 +136,7 @@ medusaIntegrationTestRunner({
                   expect.objectContaining({
                     amount: 1500,
                     currency_code: "usd",
+                    rules: { region_id: "na" },
                   }),
                 ]),
               }),
@@ -864,7 +875,7 @@ medusaIntegrationTestRunner({
 
       it("successfully creates, updates and deletes an inventory item link from a variant", async () => {
         const res = await api.post(
-          `/admin/products/${baseProduct.id}/variants/inventory-items/batch`,
+          `/admin/products/${inventoryProduct.id}/variants/inventory-items/batch`,
           {
             create: [
               {
@@ -894,7 +905,7 @@ medusaIntegrationTestRunner({
 
         const createdLinkVariant = (
           await api.get(
-            `/admin/products/${baseProduct.id}/variants/${inventoryVariant3.id}?fields=inventory_items.inventory.*,inventory_items.*`,
+            `/admin/products/${inventoryProduct.id}/variants/${inventoryVariant3.id}?fields=inventory_items.inventory.*,inventory_items.*`,
             adminHeaders
           )
         ).data.variant
@@ -911,7 +922,7 @@ medusaIntegrationTestRunner({
 
         const updatedLinkVariant = (
           await api.get(
-            `/admin/products/${baseProduct.id}/variants/${inventoryVariant1.id}?fields=inventory_items.inventory.*,inventory_items.*`,
+            `/admin/products/${inventoryProduct.id}/variants/${inventoryVariant1.id}?fields=inventory_items.inventory.*,inventory_items.*`,
             adminHeaders
           )
         ).data.variant
@@ -928,7 +939,7 @@ medusaIntegrationTestRunner({
 
         const deletedLinkVariant = (
           await api.get(
-            `/admin/products/${baseProduct.id}/variants/${inventoryVariant2.id}?fields=inventory_items.inventory.*,inventory_items.*`,
+            `/admin/products/${inventoryProduct.id}/variants/${inventoryVariant2.id}?fields=inventory_items.inventory.*,inventory_items.*`,
             adminHeaders
           )
         ).data.variant

@@ -184,6 +184,13 @@ export const generatedSidebar = [
           {
             "loaded": true,
             "isPathHref": true,
+            "path": "/commerce-modules/auth/module-options",
+            "title": "Module Options",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
             "path": "/commerce-modules/auth/examples",
             "title": "Examples",
             "children": []
@@ -196,8 +203,30 @@ export const generatedSidebar = [
               {
                 "loaded": true,
                 "isPathHref": true,
+                "path": "/commerce-modules/auth/auth-identity-and-actor-types",
+                "title": "Identity and Actor Types",
+                "children": []
+              },
+              {
+                "loaded": true,
+                "isPathHref": true,
                 "path": "/commerce-modules/auth/auth-providers",
                 "title": "Auth Providers",
+                "children": [
+                  {
+                    "loaded": true,
+                    "isPathHref": true,
+                    "path": "/commerce-modules/auth/auth-providers/emailpass",
+                    "title": "Emailpass Auth Provider Module",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/commerce-modules/auth/authentication-route",
+                "title": "Authentication Route",
                 "children": []
               },
               {
@@ -206,12 +235,19 @@ export const generatedSidebar = [
                 "path": "/commerce-modules/auth/auth-flows",
                 "title": "Auth Flows",
                 "children": []
-              },
+              }
+            ]
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "title": "Guides",
+            "children": [
               {
                 "loaded": true,
                 "isPathHref": true,
-                "path": "/commerce-modules/auth/user-creation",
-                "title": "User Creation",
+                "path": "/commerce-modules/auth/create-actor-type",
+                "title": "Create an Actor Type",
                 "children": []
               }
             ]
@@ -5780,6 +5816,98 @@ export const generatedSidebar = [
   {
     "loaded": true,
     "isPathHref": true,
+    "title": "Recipes",
+    "hasTitleStyling": true,
+    "children": [
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/b2b",
+        "title": "B2B",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/commerce-automation",
+        "title": "Commerce Automation",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/digital-products",
+        "title": "Digital Products",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/ecommerce",
+        "title": "Ecommerce",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/integrate-ecommerce-stack",
+        "title": "Integrate Ecommerce Stack",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/marketplace",
+        "title": "Marketplace",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/multi-region-store",
+        "title": "Multi-Region Store",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/omnichannel",
+        "title": "Omnichannel Store",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/oms",
+        "title": "OMS",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/personalized-products",
+        "title": "Personalized Products",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/pos",
+        "title": "POS",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/recipes/subscriptions",
+        "title": "Subscriptions",
+        "children": []
+      }
+    ]
+  },
+  {
+    "loaded": true,
+    "isPathHref": true,
     "title": "SDKs and Tools",
     "hasTitleStyling": true,
     "children": [
@@ -6948,6 +7076,304 @@ export const generatedSidebar = [
             "isPathHref": true,
             "path": "/architectural-modules/workflow-engine/redis",
             "title": "Redis",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "loaded": true,
+    "isPathHref": true,
+    "path": "/storefront-development",
+    "title": "Storefront Development",
+    "hasTitleStyling": true,
+    "isChildSidebar": true,
+    "children": [
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/storefront-development/tips",
+        "title": "Tips",
+        "children": []
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/storefront-development/regions",
+        "title": "Regions",
+        "children": [
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/regions/list",
+            "title": "List Regions",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/regions/store-retrieve-region",
+            "title": "Store and Retrieve Regions",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/regions/context",
+            "title": "Region React Context",
+            "children": []
+          }
+        ]
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/storefront-development/products",
+        "title": "Products",
+        "children": [
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/products/list",
+            "title": "List Products",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/products/retrieve",
+            "title": "Retrieve a Product",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/products/variants",
+            "title": "Select a Variant",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/products/price",
+            "title": "Retrieve Variant Prices",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/products/categories",
+            "title": "Categories",
+            "children": [
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/storefront-development/products/categories/list",
+                "title": "List Categories",
+                "children": []
+              },
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/storefront-development/products/categories/retrieve",
+                "title": "Retrieve a Category",
+                "children": []
+              },
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/storefront-development/products/categories/products",
+                "title": "Retrieve a Category's Products",
+                "children": []
+              },
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/storefront-development/products/categories/nested-categories",
+                "title": "Retrieve Nested Categories",
+                "children": []
+              }
+            ]
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/products/collections",
+            "title": "Collections",
+            "children": [
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/storefront-development/products/collections/list",
+                "title": "List Collections",
+                "children": []
+              },
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/storefront-development/products/collections/retrieve",
+                "title": "Retrieve a Collection",
+                "children": []
+              },
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/storefront-development/products/collections/products",
+                "title": "Retrieve a Collection's Products",
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/storefront-development/cart",
+        "title": "Carts",
+        "children": [
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/cart/create",
+            "title": "Create Cart",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/cart/retrieve",
+            "title": "Retrieve Cart",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/cart/context",
+            "title": "Cart React Context",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/cart/update",
+            "title": "Update Cart",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/cart/manage-items",
+            "title": "Manage Line Items",
+            "children": []
+          }
+        ]
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/storefront-development/checkout",
+        "title": "Checkout",
+        "children": [
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/checkout/email",
+            "title": "1. Enter Email",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/checkout/address",
+            "title": "2. Enter Address",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/checkout/shipping",
+            "title": "3. Choose Shipping Method",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/checkout/payment",
+            "title": "4. Choose Payment Provider",
+            "children": [
+              {
+                "loaded": true,
+                "isPathHref": true,
+                "path": "/storefront-development/checkout/payment/stripe",
+                "title": "Example: Stripe",
+                "children": []
+              }
+            ]
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/checkout/complete-cart",
+            "title": "5. Complete Cart",
+            "children": []
+          }
+        ]
+      },
+      {
+        "loaded": true,
+        "isPathHref": true,
+        "path": "/storefront-development/customers",
+        "title": "Customers",
+        "children": [
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/customers/register",
+            "title": "Register Customer",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/customers/login",
+            "title": "Login Customer",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/customers/retrieve",
+            "title": "Retrieve Customer",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/customers/context",
+            "title": "Customer React Context",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/customers/profile",
+            "title": "Edit Customer Profile",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/customers/addresses",
+            "title": "Manage Customer Addresses",
+            "children": []
+          },
+          {
+            "loaded": true,
+            "isPathHref": true,
+            "path": "/storefront-development/customers/log-out",
+            "title": "Log-out Customer",
             "children": []
           }
         ]

@@ -9,6 +9,7 @@ import {
   DAL,
   FilterablePaymentCollectionProps,
   FilterablePaymentProviderProps,
+  FilterablePaymentSessionProps,
   FindConfig,
   InternalModuleDeclaration,
   IPaymentModuleService,
@@ -52,49 +53,39 @@ import PaymentProviderService from "./payment-provider"
 
 type InjectedDependencies = {
   baseRepository: DAL.RepositoryService
-  paymentService: ModulesSdkTypes.InternalModuleService<any>
-  captureService: ModulesSdkTypes.InternalModuleService<any>
-  refundService: ModulesSdkTypes.InternalModuleService<any>
-  paymentSessionService: ModulesSdkTypes.InternalModuleService<any>
-  paymentCollectionService: ModulesSdkTypes.InternalModuleService<any>
+  paymentService: ModulesSdkTypes.IMedusaInternalService<any>
+  captureService: ModulesSdkTypes.IMedusaInternalService<any>
+  refundService: ModulesSdkTypes.IMedusaInternalService<any>
+  paymentSessionService: ModulesSdkTypes.IMedusaInternalService<any>
+  paymentCollectionService: ModulesSdkTypes.IMedusaInternalService<any>
   paymentProviderService: PaymentProviderService
 }
 
-const generateMethodForModels = [
+const generateMethodForModels = {
   PaymentCollection,
-  Payment,
   PaymentSession,
+  Payment,
   Capture,
   Refund,
-]
+}
 
-export default class PaymentModuleService<
-    TPaymentCollection extends PaymentCollection = PaymentCollection,
-    TPayment extends Payment = Payment,
-    TCapture extends Capture = Capture,
-    TRefund extends Refund = Refund,
-    TPaymentSession extends PaymentSession = PaymentSession
-  >
-  extends ModulesSdkUtils.abstractModuleServiceFactory<
-    InjectedDependencies,
-    PaymentCollectionDTO,
-    {
-      PaymentCollection: { dto: PaymentCollectionDTO }
-      PaymentSession: { dto: PaymentSessionDTO }
-      Payment: { dto: PaymentDTO }
-      Capture: { dto: CaptureDTO }
-      Refund: { dto: RefundDTO }
-    }
-  >(PaymentCollection, generateMethodForModels, entityNameToLinkableKeysMap)
+export default class PaymentModuleService
+  extends ModulesSdkUtils.MedusaService<{
+    PaymentCollection: { dto: PaymentCollectionDTO }
+    PaymentSession: { dto: PaymentSessionDTO }
+    Payment: { dto: PaymentDTO }
+    Capture: { dto: CaptureDTO }
+    Refund: { dto: RefundDTO }
+  }>(generateMethodForModels, entityNameToLinkableKeysMap)
   implements IPaymentModuleService
 {
   protected baseRepository_: DAL.RepositoryService
 
-  protected paymentService_: ModulesSdkTypes.InternalModuleService<TPayment>
-  protected captureService_: ModulesSdkTypes.InternalModuleService<TCapture>
-  protected refundService_: ModulesSdkTypes.InternalModuleService<TRefund>
-  protected paymentSessionService_: ModulesSdkTypes.InternalModuleService<TPaymentSession>
-  protected paymentCollectionService_: ModulesSdkTypes.InternalModuleService<TPaymentCollection>
+  protected paymentService_: ModulesSdkTypes.IMedusaInternalService<Payment>
+  protected captureService_: ModulesSdkTypes.IMedusaInternalService<Capture>
+  protected refundService_: ModulesSdkTypes.IMedusaInternalService<Refund>
+  protected paymentSessionService_: ModulesSdkTypes.IMedusaInternalService<PaymentSession>
+  protected paymentCollectionService_: ModulesSdkTypes.IMedusaInternalService<PaymentCollection>
   protected paymentProviderService_: PaymentProviderService
 
   constructor(
@@ -126,6 +117,7 @@ export default class PaymentModuleService<
     return joinerConfig
   }
 
+  // @ts-ignore
   createPaymentCollections(
     data: CreatePaymentCollectionDTO,
     sharedContext?: Context
@@ -155,14 +147,15 @@ export default class PaymentModuleService<
     )
   }
 
-  @InjectManager("baseRepository_")
+  @InjectTransactionManager("baseRepository_")
   async createPaymentCollections_(
     data: CreatePaymentCollectionDTO[],
     @MedusaContext() sharedContext?: Context
   ): Promise<PaymentCollection[]> {
-    return this.paymentCollectionService_.create(data, sharedContext)
+    return await this.paymentCollectionService_.create(data, sharedContext)
   }
 
+  // @ts-ignore
   updatePaymentCollections(
     paymentCollectionId: string,
     data: PaymentCollectionUpdatableFields,
@@ -527,6 +520,38 @@ export default class PaymentModuleService<
   }
 
   @InjectManager("baseRepository_")
+  // @ts-expect-error
+  async retrievePaymentSession(
+    id: string,
+    config: FindConfig<PaymentSessionDTO> = {},
+    @MedusaContext() sharedContext?: Context
+  ): Promise<PaymentSessionDTO> {
+    const session = await this.paymentSessionService_.retrieve(
+      id,
+      config,
+      sharedContext
+    )
+
+    return await this.baseRepository_.serialize(session)
+  }
+
+  @InjectManager("baseRepository_")
+  // @ts-expect-error
+  async listPaymentSessions(
+    filters?: FilterablePaymentSessionProps,
+    config?: FindConfig<PaymentSessionDTO>,
+    sharedContext?: Context
+  ): Promise<PaymentSessionDTO[]> {
+    const sessions = await this.paymentSessionService_.list(
+      filters,
+      config,
+      sharedContext
+    )
+
+    return await this.baseRepository_.serialize<PaymentSessionDTO[]>(sessions)
+  }
+
+  @InjectManager("baseRepository_")
   async updatePayment(
     data: UpdatePaymentDTO,
     @MedusaContext() sharedContext?: Context
@@ -821,7 +846,7 @@ export default class PaymentModuleService<
       case PaymentActions.SUCCESSFUL: {
         const [payment] = await this.listPayments(
           {
-            session_id: event.data.resource_id,
+            payment_session_id: event.data.resource_id,
           },
           {},
           sharedContext

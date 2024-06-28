@@ -1,13 +1,14 @@
-import { Modules, ModulesDefinition } from "@medusajs/modules-sdk"
+import { ModulesDefinition } from "@medusajs/modules-sdk"
 import { FulfillmentSetDTO, IFulfillmentModuleService } from "@medusajs/types"
+import { Modules } from "@medusajs/utils"
+import { FulfillmentProviderService } from "@services"
 import {
+  SuiteOptions,
   initModules,
   moduleIntegrationTestRunner,
-  SuiteOptions,
-} from "medusa-test-utils/dist"
+} from "medusa-test-utils"
 import { resolve } from "path"
 import { createFullDataStructure } from "../../__fixtures__"
-import { FulfillmentProviderService } from "@services"
 import { FulfillmentProviderServiceFixtures } from "../../__fixtures__/providers"
 
 let moduleOptions = {
@@ -30,7 +31,7 @@ let providerId = "fixtures-fulfillment-provider_test-provider"
 
 async function list(
   service: IFulfillmentModuleService,
-  ...args: Parameters<IFulfillmentModuleService["list"]>
+  ...args: Parameters<IFulfillmentModuleService["listFulfillmentSets"]>
 ) {
   const [filters = {}, config = {}] = args
 
@@ -48,7 +49,7 @@ async function list(
     ...config,
   }
 
-  return await service.list(filters, finalConfig)
+  return await service.listFulfillmentSets(filters, finalConfig)
 }
 
 function expectSoftDeleted(
@@ -109,7 +110,7 @@ moduleIntegrationTestRunner({
       it("should load and save all the providers on bootstrap with the correct is_enabled value", async () => {
         const databaseConfig = {
           schema: "public",
-          clientUrl: MikroOrmWrapper.clientUrl,
+          clientUrl: MikroOrmWrapper.clientUrl!,
         }
 
         const providersConfig = {}
@@ -159,7 +160,7 @@ moduleIntegrationTestRunner({
                 name
               )
             )
-          })
+          })!
           expect(provider).toBeDefined()
           expect(provider.is_enabled).toBeTruthy()
         }
@@ -222,7 +223,7 @@ moduleIntegrationTestRunner({
                 name
               )
             )
-          })
+          })!
           expect(provider).toBeDefined()
 
           const isEnabled = !!providersConfig2[name]
@@ -242,7 +243,7 @@ moduleIntegrationTestRunner({
          * Soft delete the fulfillment set
          */
 
-        await service.softDelete(fulfillmentSets[0].id)
+        await service.softDeleteFulfillmentSets([fulfillmentSets[0].id])
         const deletedFulfillmentSets = await list(
           service,
           {},
@@ -256,7 +257,7 @@ moduleIntegrationTestRunner({
          * Restore the fulfillment set
          */
 
-        await service.restore(fulfillmentSets[0].id)
+        await service.restoreFulfillmentSets([fulfillmentSets[0].id])
         const restoredFulfillmentSets = await list(service)
         expectSoftDeleted(restoredFulfillmentSets)
       })

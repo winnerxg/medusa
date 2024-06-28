@@ -13,11 +13,12 @@ import { ProtectedRoute } from "../../components/authentication/protected-route"
 import { MainLayout } from "../../components/layout/main-layout"
 import { SettingsLayout } from "../../components/layout/settings-layout"
 import { ErrorBoundary } from "../../components/utilities/error-boundary"
-import { InventoryItemRes, PriceListRes } from "../../types/api-responses"
+import { PriceListRes } from "../../types/api-responses"
 
 import { RouteExtensions } from "./route-extensions"
 import { SettingsExtensions } from "./settings-extensions"
 
+// TODO: Add translations for all breadcrumbs
 export const RouteMap: RouteObject[] = [
   {
     path: "/login",
@@ -63,7 +64,7 @@ export const RouteMap: RouteObject[] = [
                 path: ":id",
                 lazy: () => import("../../routes/products/product-detail"),
                 handle: {
-                  crumb: (data: { product: HttpTypes.AdminProduct }) =>
+                  crumb: (data: HttpTypes.AdminProductResponse) =>
                     data.product.title,
                 },
                 children: [
@@ -109,10 +110,32 @@ export const RouteMap: RouteObject[] = [
                     lazy: () =>
                       import("../../routes/products/product-create-variant"),
                   },
+                ],
+              },
+              {
+                path: ":id/variants/:variant_id",
+                lazy: () =>
+                  import(
+                    "../../routes/product-variants/product-variant-detail"
+                  ),
+                children: [
                   {
-                    path: "variants/:variant_id/edit",
+                    path: "edit",
                     lazy: () =>
-                      import("../../routes/products/product-edit-variant"),
+                      import(
+                        "../../routes/product-variants/product-variant-edit"
+                      ),
+                  },
+                  {
+                    path: "prices",
+                    lazy: () => import("../../routes/products/product-prices"),
+                  },
+                  {
+                    path: "manage-items",
+                    lazy: () =>
+                      import(
+                        "../../routes/product-variants/product-variant-manage-inventory-items"
+                      ),
                   },
                 ],
               },
@@ -127,6 +150,18 @@ export const RouteMap: RouteObject[] = [
               {
                 path: "",
                 lazy: () => import("../../routes/categories/category-list"),
+                children: [
+                  {
+                    path: "create",
+                    lazy: () =>
+                      import("../../routes/categories/category-create"),
+                  },
+                  {
+                    path: "organize",
+                    lazy: () =>
+                      import("../../routes/categories/category-organize"),
+                  },
+                ],
               },
               {
                 path: ":id",
@@ -135,6 +170,22 @@ export const RouteMap: RouteObject[] = [
                   crumb: (data: AdminProductCategoryResponse) =>
                     data.product_category.name,
                 },
+                children: [
+                  {
+                    path: "edit",
+                    lazy: () => import("../../routes/categories/category-edit"),
+                  },
+                  {
+                    path: "products",
+                    lazy: () =>
+                      import("../../routes/categories/category-products"),
+                  },
+                  {
+                    path: "organize",
+                    lazy: () =>
+                      import("../../routes/categories/category-organize"),
+                  },
+                ],
               },
             ],
           },
@@ -467,12 +518,19 @@ export const RouteMap: RouteObject[] = [
               {
                 path: "",
                 lazy: () => import("../../routes/inventory/inventory-list"),
+                children: [
+                  {
+                    path: "create",
+                    lazy: () =>
+                      import("../../routes/inventory/inventory-create"),
+                  },
+                ],
               },
               {
                 path: ":id",
                 lazy: () => import("../../routes/inventory/inventory-detail"),
                 handle: {
-                  crumb: (data: InventoryItemRes) =>
+                  crumb: (data: HttpTypes.AdminInventoryItemResponse) =>
                     data.inventory_item.title ?? data.inventory_item.sku,
                 },
                 children: [
@@ -697,19 +755,63 @@ export const RouteMap: RouteObject[] = [
                 lazy: () => import("../../routes/locations/location-create"),
               },
               {
+                path: "shipping-profiles",
+                element: <Outlet />,
+                handle: {
+                  crumb: () => "Shipping Profiles",
+                },
+                children: [
+                  {
+                    path: "",
+                    lazy: () =>
+                      import(
+                        "../../routes/shipping-profiles/shipping-profiles-list"
+                      ),
+                    children: [
+                      {
+                        path: "create",
+                        lazy: () =>
+                          import(
+                            "../../routes/shipping-profiles/shipping-profile-create"
+                          ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ":id",
+                    handle: {
+                      crumb: (data) => data.shipping_profile.name,
+                    },
+                    lazy: () =>
+                      import(
+                        "../../routes/shipping-profiles/shipping-profile-detail"
+                      ),
+                  },
+                ],
+              },
+              {
+                path: "shipping-option-types",
+                element: <Outlet />,
+                handle: {
+                  crumb: () => "Shipping Option Types",
+                },
+              },
+              {
                 path: ":location_id",
-                lazy: () => import("../../routes/locations/location-details"),
+                lazy: () => import("../../routes/locations/location-detail"),
+                handle: {
+                  crumb: (data: HttpTypes.AdminStockLocationResponse) =>
+                    data.stock_location.name,
+                },
                 children: [
                   {
                     path: "edit",
                     lazy: () => import("../../routes/locations/location-edit"),
                   },
                   {
-                    path: "sales-channels/edit",
+                    path: "sales-channels",
                     lazy: () =>
-                      import(
-                        "../../routes/locations/location-add-sales-channels"
-                      ),
+                      import("../../routes/locations/location-sales-channels"),
                   },
                   {
                     path: "fulfillment-set/:fset_id",
@@ -717,7 +819,9 @@ export const RouteMap: RouteObject[] = [
                       {
                         path: "service-zones/create",
                         lazy: () =>
-                          import("../../routes/locations/service-zone-create"),
+                          import(
+                            "../../routes/locations/location-service-zone-create"
+                          ),
                       },
                       {
                         path: "service-zone/:zone_id",
@@ -726,14 +830,14 @@ export const RouteMap: RouteObject[] = [
                             path: "edit",
                             lazy: () =>
                               import(
-                                "../../routes/locations/service-zone-edit"
+                                "../../routes/locations/location-service-zone-edit"
                               ),
                           },
                           {
-                            path: "edit-areas",
+                            path: "areas",
                             lazy: () =>
                               import(
-                                "../../routes/locations/service-zone-areas-edit"
+                                "../../routes/locations/location-service-zone-manage-areas"
                               ),
                           },
                           {
@@ -743,7 +847,7 @@ export const RouteMap: RouteObject[] = [
                                 path: "create",
                                 lazy: () =>
                                   import(
-                                    "../../routes/locations/shipping-options-create"
+                                    "../../routes/locations/location-service-zone-shipping-option-create"
                                   ),
                               },
                               {
@@ -753,14 +857,14 @@ export const RouteMap: RouteObject[] = [
                                     path: "edit",
                                     lazy: () =>
                                       import(
-                                        "../../routes/locations/shipping-option-edit"
+                                        "../../routes/locations/location-service-zone-shipping-option-edit"
                                       ),
                                   },
                                   {
-                                    path: "edit-pricing",
+                                    path: "pricing",
                                     lazy: () =>
                                       import(
-                                        "../../routes/locations/shipping-options-edit-pricing"
+                                        "../../routes/locations/location-service-zone-shipping-option-pricing"
                                       ),
                                   },
                                 ],
@@ -775,6 +879,7 @@ export const RouteMap: RouteObject[] = [
               },
             ],
           },
+
           {
             path: "workflows",
             element: <Outlet />,
@@ -808,37 +913,43 @@ export const RouteMap: RouteObject[] = [
             ],
           },
           {
-            path: "shipping-profiles",
+            path: "product-types",
             element: <Outlet />,
             handle: {
-              crumb: () => "Shipping Profiles",
+              crumb: () => "Product Types",
             },
             children: [
               {
                 path: "",
                 lazy: () =>
-                  import(
-                    "../../routes/shipping-profiles/shipping-profiles-list"
-                  ),
+                  import("../../routes/product-types/product-type-list"),
                 children: [
                   {
                     path: "create",
                     lazy: () =>
-                      import(
-                        "../../routes/shipping-profiles/shipping-profile-create"
-                      ),
+                      import("../../routes/product-types/product-type-create"),
                   },
                 ],
               },
               {
                 path: ":id",
                 lazy: () =>
-                  import(
-                    "../../routes/shipping-profiles/shipping-profile-detail"
-                  ),
+                  import("../../routes/product-types/product-type-detail"),
+                handle: {
+                  crumb: (data: HttpTypes.AdminProductTypeResponse) =>
+                    data.product_type.value,
+                },
+                children: [
+                  {
+                    path: "edit",
+                    lazy: () =>
+                      import("../../routes/product-types/product-type-edit"),
+                  },
+                ],
               },
             ],
           },
+
           {
             path: "publishable-api-keys",
             element: <Outlet />,
